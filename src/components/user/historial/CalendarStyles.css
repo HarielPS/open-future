@@ -1,0 +1,12 @@
+/* CalendarStyles.css */
+.highlight {
+    background: #006edc !important;
+    color: white !important;
+    border-radius: 50%;
+  }
+  
+  .react-calendar__tile--active {
+    background: #005bb5 !important;
+    color: white !important;
+  }
+  
