@@ -1,12 +1,11 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import CardFinance from '@/components/card/Card';
-import { Box, Typography, Pagination } from '@mui/material';
+import { Box, Pagination } from '@mui/material';
 import { db } from '../../../../../firebase';
-import { formatDistanceToNow,format } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import Loading from '@/components/loading/loading';
 import MaximizableDemo from '@/components/user/proyectos/ModalProyectos';
-import { color } from '@mui/system';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -16,24 +15,30 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null); // Add state for the selected project
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [pageBounds, setPageBounds] = useState([]); // Guardamos los límites de cada página
 
   const fetchProjects = async (page) => {
     setLoading(true);
-    const offset = (page - 1) * ITEMS_PER_PAGE;
+
     try {
-      const querySnapshot = await db.collection('proyecto')
+      let query = db.collection('proyecto')
+        .where('estado_proyecto', '==', 'Fondeo')
         .orderBy('fecha_solicitud')
-        .startAt(offset)
-        .limit(ITEMS_PER_PAGE)
-        .get();
+        .limit(ITEMS_PER_PAGE);
 
-      const totalCount = await db.collection('proyecto').get().then(snapshot => snapshot.size);
-      setTotalPages(Math.ceil(totalCount / ITEMS_PER_PAGE));
+      // Ajustar la consulta para paginación
+      if (page > 1 && pageBounds[page - 2]) {
+        query = query.startAfter(pageBounds[page - 2]);
+      }
 
+      const querySnapshot = await query.get();
+
+      // Procesar los datos obtenidos
       const projectPromises = querySnapshot.docs.map(async (doc) => {
         let data = doc.data();
-        data.id = doc.id; 
+        data.id = doc.id;
+
         if (data.empresa) {
           const empresaDoc = await data.empresa.get();
           if (empresaDoc.exists) {
@@ -44,6 +49,7 @@ export default function Page() {
             };
           }
         }
+
         if (data.categoria && Array.isArray(data.categoria)) {
           const categoryNames = await Promise.all(data.categoria.map(async (catRef) => {
             const catDoc = await catRef.get();
@@ -51,8 +57,10 @@ export default function Page() {
           }));
           data = { ...data, categoria: categoryNames };
         }
+
         const fechaSolicitudDate = data.fecha_solicitud.toDate();
         data.timeAgo = formatDistanceToNow(fechaSolicitudDate, { addSuffix: true });
+
         if (data.fecha_caducidad) {
           const fechaCaducidadDate = data.fecha_caducidad.toDate();
           data.fecha_caducidad_format = format(fechaCaducidadDate, 'dd/MM/yyyy');
@@ -63,6 +71,20 @@ export default function Page() {
 
       const projectData = await Promise.all(projectPromises);
       setProjects(projectData);
+
+      // Guardar el último documento visible de esta página
+      const newPageBounds = [...pageBounds];
+      newPageBounds[page - 1] = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setPageBounds(newPageBounds);
+
+      // Calcular el total de páginas
+      if (page === 1) {
+        const totalCount = await db.collection('proyecto')
+          .where('estado_proyecto', '==', 'Fondeo')
+          .get()
+          .then(snapshot => snapshot.size);
+        setTotalPages(Math.ceil(totalCount / ITEMS_PER_PAGE));
+      }
     } catch (error) {
       console.error("Error fetching data: ", error);
     } finally {
@@ -71,7 +93,6 @@ export default function Page() {
   };
 
   useEffect(() => {
-    console.log("se cargo el componente");
     fetchProjects(currentPage);
   }, [currentPage]);
 
@@ -106,7 +127,7 @@ export default function Page() {
             tags={project.categoria}
             description={project.descripcion}
             fecha_cad={project.fecha_caducidad_format}
-            onViewMore={() => handleViewMore(project)} // Pass the project data to the handler
+            onViewMore={() => handleViewMore(project)}
           />
         </Box>
       ))}

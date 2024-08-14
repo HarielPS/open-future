@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import CardInfoInicio from "@/components/user/inicio/CardInfoInicio";
 import MyResponsivePie from "@/components/grafica/pastel";
 import MyResponsiveLine from "@/components/grafica/histograma";
-import { Box } from "@mui/material";
+import { Box, Alert, Typography } from "@mui/material";
 import MyResponsiveBar from "@/components/grafica/barras";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";
@@ -113,15 +113,21 @@ const Page = () => {
         />
       </div>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', height: 'calc(100% - 150px)', mt: 2 }}>
-        <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' } }}>
-          <MyResponsiveBar />
-        </Box>
+      {(proyectosEnProgreso > 0 || proyectosFinalizados > 0) ? (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', height: 'calc(100% - 150px)', mt: 2 }}>
+          <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' } }}>
+            <MyResponsiveBar />
+          </Box>
 
-        <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' }, mt: { xs: 10, md: 0 } }}>
-          <MyResponsivePie />
+          <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' }, mt: { xs: 10, md: 0 } }}>
+            <MyResponsivePie />
+          </Box>
         </Box>
-      </Box>
+      ) : (
+        <Alert severity="info" sx={{ textAlign: 'center', margin: '20px 0', width: '100%' }}>
+          Actualmente no cuentas con proyectos para visualizar más información general.
+        </Alert>
+      )}
     </Box>
   );
 }

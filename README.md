@@ -2,7 +2,7 @@
 
 1. Clone the repository
 
-        git clone https://github.com/HarielPS/growing-up.git
+        git clone https://github.com/HarielPS/open-future.git
 
 2. Run npm install
 

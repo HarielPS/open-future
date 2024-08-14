@@ -52,7 +52,7 @@ export default function FAQ() {
             id="panel1d-header"
           >
             <Typography component="h3" variant="subtitle2">
-            ¿Qué es Growing Up?
+            ¿Qué es Open Future?
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -61,7 +61,7 @@ export default function FAQ() {
               gutterBottom
               sx={{ maxWidth: { sm: '100%', md: '70%' } }}
             >
-              Growing Up es una plataforma financiera que utiliza tecnología blockchain y crowdfunding para ofrecer soluciones de financiamiento para empresas. Facilitamos el adelanto de pagos de facturas y la obtención de préstamos con tasas competitivas.
+              Open Future es una plataforma financiera que utiliza tecnología blockchain y crowdfunding para ofrecer soluciones de financiamiento para empresas. Facilitamos el adelanto de pagos de facturas y la obtención de préstamos con tasas competitivas.
             </Typography>
           </AccordionDetails>
         </Accordion>
@@ -75,7 +75,7 @@ export default function FAQ() {
             id="panel2d-header"
           >
             <Typography component="h3" variant="subtitle2">
-            ¿Cómo funciona Growing Up?
+            ¿Cómo funciona Open Future?
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -98,7 +98,7 @@ export default function FAQ() {
             id="panel3d-header"
           >
             <Typography component="h3" variant="subtitle2">
-            ¿Es seguro utilizar Growing Up?
+            ¿Es seguro utilizar Open Future?
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -107,7 +107,7 @@ export default function FAQ() {
               gutterBottom
               sx={{ maxWidth: { sm: '100%', md: '70%' } }}
             >
-              Sí, Growing Up utiliza tecnología blockchain para
+              Sí, Open Future utiliza tecnología blockchain para
               garantizar la seguridad y transparencia de todas las transacciones.
              Además, implementamos medidas de seguridad adicionales para proteger la información y los fondos de nuestros usuarios.
             </Typography>
@@ -123,7 +123,7 @@ export default function FAQ() {
             id="panel4d-header"
           >
             <Typography component="h3" variant="subtitle2">
-            ¿Cómo puedo contactar al equipo de Growing Up si tengo alguna pregunta o inquietud?
+            ¿Cómo puedo contactar al equipo de Open Future si tengo alguna pregunta o inquietud?
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -132,7 +132,7 @@ export default function FAQ() {
               gutterBottom
               sx={{ maxWidth: { sm: '100%', md: '70%' } }}
             >
-              Puedes ponerte en contacto con el equipo de Growing Up a través de nuestro servicio
+              Puedes ponerte en contacto con el equipo de Open Future a través de nuestro servicio
                de atención al cliente por correo electrónico o teléfono. También ofrecemos recursos
                 de ayuda en nuestra plataforma para responder a preguntas comunes y proporcionar asistencia adicional.
             </Typography>

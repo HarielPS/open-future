@@ -88,7 +88,7 @@ export default function SideBar({ visible, handleVisible }) {
                   <span className="inline-flex align-items-center gap-2">
                     <Image src="/logo2.png" alt="Logo" width={55} height={55} />
                     <span className="font-semibold text-2xl" style={{ color: theme.palette.primary.main }}>
-                      Growing Up
+                      Open Future
                     </span>
                   </span>
                   <span>

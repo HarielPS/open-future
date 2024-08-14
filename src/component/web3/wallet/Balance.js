@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import Web3 from 'web3';
 
-// Function to fetch network details from the API
 const getNetworkDetails = async (chainId) => {
   try {
     const response = await fetch(`/api/component/getChain?chainId=${chainId}`);
@@ -30,6 +29,7 @@ const NetworkAndBalance = () => {
   const [currency, setCurrency] = useState('ETH');
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initializeWeb3 = async () => {
@@ -40,14 +40,18 @@ const NetworkAndBalance = () => {
       if (window.ethereum) {
         const web3Instance = new Web3(window.ethereum);
         setWeb3(web3Instance);
-        // Fetch network and balance immediately
-        await fetchNetworkAndBalance(web3Instance, storedAccount);
-        // Detect network change
-        window.ethereum.on('chainChanged', async (chainId) => {
+        try {
           await fetchNetworkAndBalance(web3Instance, storedAccount);
-        });
+          window.ethereum.on('chainChanged', async (chainId) => {
+            await fetchNetworkAndBalance(web3Instance, storedAccount);
+          });
+        } catch (err) {
+          console.error('Failed to fetch network and balance:', err);
+          setError('Unable to retrieve wallet information. Please ensure your wallet is unlocked.');
+        }
       } else {
         console.log('No Ethereum provider found. Install MetaMask.');
+        setError('No Ethereum provider found. Please install MetaMask.');
       }
     };
     initializeWeb3();
@@ -55,29 +59,40 @@ const NetworkAndBalance = () => {
 
   const fetchNetworkAndBalance = async (web3Instance, account) => {
     if (web3Instance && account) {
-      const chainId = await web3Instance.eth.getChainId();
-      console.log("Current Chain ID:", chainId);
-      const networkDetails = await getNetworkDetails(chainId);
-      const balanceWei = await web3Instance.eth.getBalance(account);
-      const balanceEth = web3Instance.utils.fromWei(balanceWei, 'ether');
+      try {
+        const chainId = await web3Instance.eth.getChainId();
+        const networkDetails = await getNetworkDetails(chainId);
+        const balanceWei = await web3Instance.eth.getBalance(account);
+        const balanceEth = web3Instance.utils.fromWei(balanceWei, 'ether');
 
-      console.log("Account Balance:", balanceEth);
-
-      setNetwork(`${networkDetails.name} (Chain ID: ${chainId})`);
-      setBalance(balanceEth);
-      setCurrency(networkDetails.currency);
+        setNetwork(`${networkDetails.name} (Chain ID: ${chainId})`);
+        setBalance(balanceEth);
+        setCurrency(networkDetails.currency);
+      } catch (err) {
+        console.error('Error fetching chain ID or balance:', err);
+        setError('Unable to retrieve wallet information. Please ensure your wallet is unlocked.');
+      }
+    } else {
+      setError('No account or web3 instance available.');
     }
   };
 
   return (
     <Box>
-      {/* <Typography variant="h6" gutterBottom>Información de la Wallet</Typography> */}
-      <Typography variant="body1">
-        <strong>Red: </strong>{network}
-      </Typography>
-      <Typography variant="body1">
-        <strong>Saldo: </strong>{balance} {currency}
-      </Typography>
+      {error ? (
+        <Typography variant="body1" color="error">
+          {error}
+        </Typography>
+      ) : (
+        <>
+          <Typography variant="body1">
+            <strong>Red: </strong>{network}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Saldo: </strong>{balance} {currency}
+          </Typography>
+        </>
+      )}
     </Box>
   );
 };

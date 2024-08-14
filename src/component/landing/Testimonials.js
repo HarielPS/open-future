@@ -18,42 +18,42 @@ const userTestimonials = [
     name: 'Carlos M.',
     occupation: 'Emprendedor',
     testimonial:
-    "Gracias a Growing Up, pude adelantar el pago de mis facturas en cuestión de horas. Esto me permitió mantener mi negocio en funcionamiento sin problemas y aprovechar oportunidades de crecimiento. La plataforma es intuitiva y segura, lo que me da total confianza en su uso.",
+    "Gracias a Open Future, pude adelantar el pago de mis facturas en cuestión de horas. Esto me permitió mantener mi negocio en funcionamiento sin problemas y aprovechar oportunidades de crecimiento. La plataforma es intuitiva y segura, lo que me da total confianza en su uso.",
   },
   {
     avatar: <Avatar alt="Laura G." />,
     name: 'Laura G.',
     occupation: 'Directora Financiera',
     testimonial:
-    "Growing Up ha sido un cambio total para nuestra gestión financiera. El proceso completamente digital y las condiciones justas nos han permitido obtener financiamiento rápido sin complicaciones. Además, las tasas de interés son muy competitivas.",
+    "Open Future ha sido un cambio total para nuestra gestión financiera. El proceso completamente digital y las condiciones justas nos han permitido obtener financiamiento rápido sin complicaciones. Además, las tasas de interés son muy competitivas.",
   },
   {
     avatar: <Avatar alt="Ricardo S."/>,
     name: 'Ricardo S.',
     occupation: 'Inversionista',
     testimonial:
-    "Invertir a través de Growing Up ha sido una excelente decisión. No solo estoy obteniendo ganancias mensuales consistentes, sino que también estoy apoyando a empresas que realmente necesitan financiamiento. La transparencia y seguridad de las transacciones me han dado una gran tranquilidad.",
+    "Invertir a través de Open Future ha sido una excelente decisión. No solo estoy obteniendo ganancias mensuales consistentes, sino que también estoy apoyando a empresas que realmente necesitan financiamiento. La transparencia y seguridad de las transacciones me han dado una gran tranquilidad.",
   },
   {
     avatar: <Avatar alt="Ana T."/>,
     name: 'Ana T.',
     occupation: 'Propietaria de una PYME',
     testimonial:
-    "La posibilidad de adelantar pagos y gestionar deudas sin papeleo ha simplificado enormemente nuestra operación diaria. Growing Up nos ha proporcionado una solución flexible y eficiente, mejorando nuestro flujo de efectivo y permitiéndonos enfocarnos en el crecimiento del negocio.",
+    "La posibilidad de adelantar pagos y gestionar deudas sin papeleo ha simplificado enormemente nuestra operación diaria. Open Future nos ha proporcionado una solución flexible y eficiente, mejorando nuestro flujo de efectivo y permitiéndonos enfocarnos en el crecimiento del negocio.",
   },
   {
     avatar: <Avatar alt="Miguel P."/>,
     name: 'Miguel P.',
     occupation: 'Gerente de Ventas',
     testimonial:
-    "Growing Up nos ha permitido mantener relaciones sólidas con nuestros proveedores, gracias a la rapidez con la que podemos pagar nuestras facturas. La plataforma es fácil de usar y ha mejorado significativamente nuestra liquidez.",
+    "Open Future nos ha permitido mantener relaciones sólidas con nuestros proveedores, gracias a la rapidez con la que podemos pagar nuestras facturas. La plataforma es fácil de usar y ha mejorado significativamente nuestra liquidez.",
   },
   {
     avatar: <Avatar alt="María L."/>,
     name: 'María L.',
     occupation: 'Dueña de un Restaurante',
     testimonial:
-    "Growing Up ha transformado la forma en que manejamos nuestras finanzas. Antes, esperar el pago de facturas era un gran obstáculo, pero ahora podemos adelantar esos pagos y obtener financiamiento en cuestión de horas. Esto ha mejorado significativamente nuestro flujo de efectivo y nos ha permitido concentrarnos en lo que realmente importa: ofrecer una excelente experiencia a nuestros clientes.",
+    "Open Future ha transformado la forma en que manejamos nuestras finanzas. Antes, esperar el pago de facturas era un gran obstáculo, pero ahora podemos adelantar esos pagos y obtener financiamiento en cuestión de horas. Esto ha mejorado significativamente nuestro flujo de efectivo y nos ha permitido concentrarnos en lo que realmente importa: ofrecer una excelente experiencia a nuestros clientes.",
   },
 ];
 

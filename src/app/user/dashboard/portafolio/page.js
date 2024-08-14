@@ -1,8 +1,9 @@
+// Component: Page.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { Box } from "@mui/system";
 import InvestmentTable from "@/components/user/portafolio/tabla";
-import { Typography, Divider } from "@mui/material";
+import { Typography, Divider, Alert } from "@mui/material";
 import MyResponsivePieAdjusted from "@/components/grafica/dona";
 import getColor from "@/themes/colorUtils";
 import { useTheme } from '@mui/material/styles';
@@ -14,7 +15,7 @@ export default function Page() {
   const [rows, setRows] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
-  const [totalInvested, setTotalInvested] = useState(0); // State to hold the total invested amount
+  const [totalInvested, setTotalInvested] = useState(0);
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
@@ -43,35 +44,34 @@ export default function Page() {
           const processContract = async (contractId) => {
             const contractDocRef = doc(db, "contrato", contractId.id);
             const contractDoc = await getDoc(contractDocRef);
-          
+
             if (contractDoc.exists()) {
               const contractData = contractDoc.data();
               const projectRef = contractData.id_proyecto;
               const inversorData = contractData.inversores[userId];
-          
+
               if (inversorData && inversorData.fecha) {
                 const dueDate = new Date(inversorData.fecha.toDate());
                 dueDate.setDate(dueDate.getDate() + contractData.fecha_pago);
-          
+
                 const projectDoc = await getDoc(projectRef);
                 const projectName = projectDoc.exists() ? projectDoc.data().titulo : "Desconocido";
                 const empresaRef = projectDoc.data().empresa;
                 const empresaDoc = await getDoc(empresaRef);
                 const logo = empresaDoc.exists() ? empresaDoc.data().logo : "";
-          
+
                 statusCounts[contractData.estado] += 1;
-          
+
                 const montoInvertido = typeof inversorData.monto_invertido === 'string' 
                   ? parseFloat(inversorData.monto_invertido.replace(/[^0-9.-]+/g, "")) 
                   : inversorData.monto_invertido;
 
-                // Only add to totalInvestedAmount if the contract is not "Cancelado"
                 if (contractData.estado !== "Cancelado") {
                   totalInvestedAmount += montoInvertido;
                 }
-          
+
                 const earnings = inversorData.ganancia !== undefined ? parseFloat(inversorData.ganancia) : null;
-          
+
                 rowsData.push({
                   project: projectName,
                   term: parseInt(contractData.duracion_contrato, 10) + " meses",
@@ -98,7 +98,7 @@ export default function Page() {
           }
 
           setRows(rowsData);
-          setTotalInvested(totalInvestedAmount); // Set the total invested amount
+          setTotalInvested(totalInvestedAmount);
 
           setPieData([
             { id: "Finalizado", label: "Finalizado", value: statusCounts['Finalizado'], color: "hsl(124, 70%, 50%)" },
@@ -122,55 +122,63 @@ export default function Page() {
       <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom:'5vh'}}>
         <h1>Portafolio</h1>
       </Box>
-      
-      <Box sx={{display:'flex', flexDirection: { xs: "column", md: "row" }, alignItems: 'center', height: { xs: '100%', md: '40%' }, marginBottom:'2vh', background: getColor(theme,"seven"), borderRadius: 2, padding: 2, boxShadow: 1 }}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 2,
-            backgroundColor: getColor(theme,"fifth_rev"),
-            borderRadius: 2,
-            boxShadow: 1,
-            width: { xs: '100%', md: '50%' },
-            height: '100%',
-            marginRight: { xs: 0, md: '2vh' },
-            marginBottom: { xs: '2vh', md: 0 }
-          }}
-        >
-          <Box sx={{ textAlign: "center" }}>
-            <Typography variant="subtitle1" color="textSecondary" sx={{ marginBottom: '1vh' }}>
-              Monto total invertido
-            </Typography>
-            <Typography variant="h4" color="primary">
-              ${totalInvested.toLocaleString('en-US')}
-            </Typography>
+
+      {totalProjects > 0 ? (
+        <>
+          <Box sx={{display:'flex', flexDirection: { xs: "column", md: "row" }, alignItems: 'center', height: { xs: '100%', md: '40%' }, marginBottom:'2vh', background: getColor(theme,"seven"), borderRadius: 2, padding: 2, boxShadow: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 2,
+                backgroundColor: getColor(theme,"fifth_rev"),
+                borderRadius: 2,
+                boxShadow: 1,
+                width: { xs: '100%', md: '50%' },
+                height: '100%',
+                marginRight: { xs: 0, md: '2vh' },
+                marginBottom: { xs: '2vh', md: 0 }
+              }}
+            >
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="subtitle1" color="textSecondary" sx={{ marginBottom: '1vh' }}>
+                  Monto total invertido
+                </Typography>
+                <Typography variant="h4" color="primary">
+                  ${totalInvested.toLocaleString('en-US')}
+                </Typography>
+              </Box>
+
+              <Divider orientation="horizontal" flexItem sx={{ marginY: '10px', width: '80%' }} />
+
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="subtitle1" color="textSecondary" sx={{ marginBottom: '1vh' }}>
+                  Proyectos totales
+                </Typography>
+                <Typography variant="h4" color="primary">
+                  {totalProjects}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' }, background:getColor(theme,"fifth_rev"), borderRadius: 2, boxShadow: 1, padding:1 , alignContent:'center'}}>
+              <MyResponsivePieAdjusted data={pieData} />
+            </Box>
           </Box>
 
-          <Divider orientation="horizontal" flexItem sx={{ marginY: '10px', width: '80%' }} />
-
-          <Box sx={{ textAlign: "center" }}>
-            <Typography variant="subtitle1" color="textSecondary" sx={{ marginBottom: '1vh' }}>
-              Proyectos totales
-            </Typography>
-            <Typography variant="h4" color="primary">
-              {totalProjects}
-            </Typography>
+          <Box sx={{ height: 'calc(70% - 2vh)', marginTop: '2vh' }}>
+            <Box sx={{ height: '100%'}}>
+              <InvestmentTable rows={rows} />
+            </Box>
           </Box>
-        </Box>
-
-        <Box sx={{ height: '100%', width: { xs: '100%', md: '50%' }, background:getColor(theme,"fifth_rev"), borderRadius: 2, boxShadow: 1, padding:1 , alignContent:'center'}}>
-          <MyResponsivePieAdjusted data={pieData} />
-        </Box>
-      </Box>
-
-      <Box sx={{ height: 'calc(70% - 2vh)', marginTop: '2vh' }}>
-        <Box sx={{ height: '100%'}}>
-          <InvestmentTable rows={rows} />
-        </Box>
-      </Box>
+        </>
+      ) : (
+        <Alert severity="info" sx={{ textAlign: 'center', margin: '20px 0' }}>
+          No tienes proyectos actualmente. ¡Empieza a invertir para verlos aquí!
+        </Alert>
+      )}
     </Box>
   );
 }

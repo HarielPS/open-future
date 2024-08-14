@@ -77,12 +77,36 @@ const MyResponsivePie = () => {
                         color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`
                     }));
 
+                    // Si no hay categorías de proyectos, agregamos "Sin proyectos"
+                    if (formattedData.length === 0) {
+                        formattedData.push({
+                            id: 'sin proyectos',
+                            label: 'Sin proyectos',
+                            value: 1,
+                            color: '#cccccc'
+                        });
+                    }
+
                     setData(formattedData);
                 } else {
                     console.warn("Investor document does not exist for user:", userId);
+                    // Si no existe el documento, agregamos "Sin proyectos"
+                    setData([{
+                        id: 'sin proyectos',
+                        label: 'Sin proyectos',
+                        value: 1,
+                        color: '#cccccc'
+                    }]);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
+                // En caso de error, agregamos "Sin proyectos"
+                setData([{
+                    id: 'sin proyectos',
+                    label: 'Sin proyectos',
+                    value: 1,
+                    color: '#cccccc'
+                }]);
             }
         };
 

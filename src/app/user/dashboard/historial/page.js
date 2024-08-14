@@ -48,7 +48,7 @@ export default function Page() {
   
           if (contratoRef && pagoData.estado) {
             const contratoDoc = await getDoc(contratoRef);
-            if (contratoDoc.exists() && contratoDoc.data().estado === 'Activo') {
+            if (contratoDoc.exists() && (contratoDoc.data().estado === 'Activo' || contratoDoc.data().estado === 'Fondeo')) {
               if (pagoData.tipo === 'salida') {
                 totalMonto += parseFloat(pagoData.monto) || 0;
               } else if (pagoData.tipo === 'entrada' && pagoData.estado === 'pagado') {

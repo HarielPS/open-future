@@ -18,7 +18,7 @@ export default function HighlightSection() {
   <Typography variant="h4" component="h2" gutterBottom>
         Financiamiento rápido para tus facturas
         <br />
-        Growing Up: impulsando el crecimiento de tu empresa.
+        Open Future: impulsando el crecimiento de tu empresa.
   </Typography>
   <Grid container spacing={4} justifyContent="center" sx={{ mt: 4 }}>
     <Grid item xs={12} sm={4}>

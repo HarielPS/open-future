@@ -23,7 +23,7 @@ const items = [
     icon: <AccessTimeIcon />,
     title: 'Consigue fondos en horas, no días',
     description:
-      'Con Growing Up, puedes adelantar el pago de tus facturas y obtener financiamiento rápido a través del crowdfunding, mejorando tu flujo de efectivo de manera inmediata.',
+      'Con Open Future, puedes adelantar el pago de tus facturas y obtener financiamiento rápido a través del crowdfunding, mejorando tu flujo de efectivo de manera inmediata.',
     imageLight: 'url("/static/images/templates/templates-images/dash-light.png")',
     imageDark: 'url("/static/images/templates/templates-images/dash-dark.png")',
   },
@@ -76,17 +76,17 @@ export default function Features() {
         <Grid item xs={12} md={6}>
           <div>
             <Typography component="h2" variant="h4" color="text.primary">
-            Cómo Impulsar tu Negocio con Growing Up
+            Cómo Impulsar tu Negocio con Open Future
             </Typography>
             <Typography
               variant="body1"
               color="text.secondary"
               sx={{ mb: { xs: 2, sm: 4 }, mt:4 }}
             >
-              Growing Up te ofrece una solución financiera innovadora y eficiente para 
+              Open Future te ofrece una solución financiera innovadora y eficiente para 
               transformar la gestión de tu negocio. Con nuestra plataforma digital, puedes 
               acceder a financiamiento rápido y seguro, mejorando tu flujo de efectivo y facilitando 
-              el crecimiento de tu empresa. Descubre cómo Growing Up puede ayudarte a alcanzar tus objetivos empresariales de manera ágil y transparente.
+              el crecimiento de tu empresa. Descubre cómo Open Future puede ayudarte a alcanzar tus objetivos empresariales de manera ágil y transparente.
             </Typography>
           </div>
           <Grid container item gap={1} sx={{ display: { xs: 'auto', sm: 'none' } }}>

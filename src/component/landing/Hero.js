@@ -10,18 +10,18 @@ import Slide from '@mui/material/Slide';
 const slides = [
   {
     image: '/first.jpg',
-    title: 'Growing Up: Revolucionando el Financiamiento Empresarial',
-    text: 'Growing Up utiliza la tecnología blockchain y el crowdfunding para optimizar el flujo de efectivo de las empresas. Con condiciones justas y una plataforma digital sin complicaciones, estamos transformando la forma en que se gestionan las finanzas empresariales.',
+    title: 'Open Future: Revolucionando el Financiamiento Empresarial',
+    text: 'Open Future utiliza la tecnología blockchain y el crowdfunding para optimizar el flujo de efectivo de las empresas. Con condiciones justas y una plataforma digital sin complicaciones, estamos transformando la forma en que se gestionan las finanzas empresariales.',
   },
   {
     image: '/second.jpg',
-    title: 'Invierte y Gana con Growing Up',
-    text: 'Invierte en el crecimiento empresarial y genera ganancias mensuales con Growing Up. Tu inversión ayuda a financiar facturas y deudas, mientras recibes retornos estables y atractivos.',
+    title: 'Invierte y Gana con Open Future',
+    text: 'Invierte en el crecimiento empresarial y genera ganancias mensuales con Open Future. Tu inversión ayuda a financiar facturas y deudas, mientras recibes retornos estables y atractivos.',
   },
   {
     image: '/third.jpg',
-    title: 'Optimiza tu Liquidez con Growing Up',
-    text: 'Paga tus deudas y obtén préstamos con tasas competitivas a través de Growing Up. Mejora tu flujo de efectivo y asegura el crecimiento de tu empresa de manera eficiente y transparente.',
+    title: 'Optimiza tu Liquidez con Open Future',
+    text: 'Paga tus deudas y obtén préstamos con tasas competitivas a través de Open Future. Mejora tu flujo de efectivo y asegura el crecimiento de tu empresa de manera eficiente y transparente.',
   },
 ];
 
