@@ -40,7 +40,9 @@ const MyResponsivePie = () => {
                                 const contratoData = contratoDoc.data();
                                 const estado = contratoData.estado;
 
-                                if (estado === "Activo" || estado === "Finalizado") {
+                                // if (estado === "Activo" || estado === "Finalizado") 
+                                if (estado != 'Cancelado') 
+                                {
                                     const proyectoRef = contratoData.id_proyecto;
                                     const proyectoDoc = await getDoc(proyectoRef);
 

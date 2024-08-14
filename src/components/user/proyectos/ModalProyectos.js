@@ -252,12 +252,15 @@ const MaximizableDemo = ({ project, visible, onHide }) => {
         }
 
         const nuevoMontoRecaudado = parseFloat(projectData.monto_recaudado || 0) + parseFloat(invert);
+        console.log(nuevoMontoRecaudado);
+        console.log(projectData.monto_pedido);
+        alert("alto");
 
         const updates = {
             monto_recaudado: nuevoMontoRecaudado
         };
 
-        if (nuevoMontoRecaudado >= projectData.monto_solicitado) {
+        if (nuevoMontoRecaudado >= projectData.monto_pedido) {
             updates.estado_proyecto = 'Activo';
 
             await updateDoc(doc(db, 'contrato', contratoDocId), {
@@ -272,13 +275,14 @@ const MaximizableDemo = ({ project, visible, onHide }) => {
         const inversorRef = doc(db, 'inversor', userId);
         const inversorSnapshot = await getDoc(inversorRef);
         const inversorData = inversorSnapshot.data();
+        const contratoRef = doc(db, 'contrato', contratoDocId);
 
         // Si no existen las estructuras, se crean
         const proyectos = inversorData.proyectos || { progreso: {}, finalizados: {} };
         const progreso = proyectos.progreso || {};
 
         const nuevoCampoId = Object.keys(progreso).length + 1;
-        progreso[nuevoCampoId] = projectRef;
+        progreso[nuevoCampoId] = contratoRef;
 
         const nuevoMontoInvertido = parseFloat(inversorData.monto_total_invertido || 0) + parseFloat(invert);
 
@@ -292,7 +296,7 @@ const MaximizableDemo = ({ project, visible, onHide }) => {
         const nuevoPagoId = Object.keys(pagos).length + 1;
         pagos[nuevoPagoId] = {
             wallet: connectedWalletAddress,
-            id_contrato: doc(db, 'contrato', contratoDocId), // Referencia completa
+            id_contrato: contratoRef, // Referencia completa
             fecha: new Date(),
             monto: parseFloat(invert),
             estado: 'pagado',
@@ -332,6 +336,7 @@ const MaximizableDemo = ({ project, visible, onHide }) => {
 
         alert('Inversión realizada con éxito.');
         onHide(); // Ocultar el modal después de la inversión exitosa
+        window.location.reload();
 
     } catch (error) {
         console.error('Error writing to database:', error);
