@@ -4,7 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
+import { TableCell } from '@mui/material';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
@@ -17,17 +17,14 @@ import { Box } from '@mui/system';
 import { visuallyHidden } from '@mui/utils';
 import getColor from '@/themes/colorUtils';
 import Loading from '@/components/loading/loading';
-
-import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import ProjectModal from './modal';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '../../../../firebase';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 
 const columns = [
-  { id: 'project', label: 'Proyecto', minWidth: 170, align: 'left' }, // Align to the left
-  { id: 'term', label: 'Plazo', minWidth: 50, align: 'center' },
-  { id: 'investment', label: 'Inversión', minWidth: 170, align: 'center', format: (value) => `$${value.toLocaleString('en-US')}` },
-  { id: 'earnings', label: 'Ingresos', minWidth: 170, align: 'center', format: (value) => `$${value.toLocaleString('en-US')}` },
-  { id: 'dueDate', label: 'Fecha de Inversión', minWidth: 170, align: 'center' },
-  { id: 'fecha_contrato', label: 'Fecha Contrato', minWidth: 170, align: 'center' }, // Nuevo campo de fecha
+  { id: 'project', label: 'Proyecto', minWidth: 170, align: 'left' },
   { id: 'status', label: 'Estatus', minWidth: 170, align: 'center' },
 ];
 
@@ -64,47 +61,6 @@ function stableSort(array, comparator) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-function EnhancedTableHead(props) {
-  const { order, orderBy, onRequestSort, columns } = props;
-  const createSortHandler = (property) => (event) => {
-    onRequestSort(event, property);
-  };
-  const theme = useTheme();
-
-  return (
-    <TableHead>
-      <TableRow>
-        {columns.map((column) => (
-          <TableCell
-            key={column.id}
-            align={column.align}
-            sortDirection={orderBy === column.id ? order : false}
-            sx={{
-              background: getColor(theme, 'head'),
-              color: theme.palette.text.primary,
-              fontWeight: 'bold',
-              textAlign: column.align,
-            }}
-          >
-            <TableSortLabel
-              active={orderBy === column.id}
-              direction={orderBy === column.id ? order : 'asc'}
-              onClick={createSortHandler(column.id)}
-            >
-              {column.label}
-              {orderBy === column.id ? (
-                <Box component="span" sx={visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </Box>
-              ) : null}
-            </TableSortLabel>
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  );
-}
-
 export default function InvestmentTable({ rows }) {
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('project');
@@ -113,19 +69,14 @@ export default function InvestmentTable({ rows }) {
   const [search, setSearch] = React.useState('');
   const [filteredRows, setFilteredRows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [selectedProject, setSelectedProject] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
 
   const theme = useTheme();
 
   React.useEffect(() => {
-    const fetchData = () => {
-      // Simula la carga de datos
-      setTimeout(() => {
-        setFilteredRows(rows);
-        setLoading(false);
-      }, 2000); // Ajusta el tiempo de espera según tus necesidades
-    };
-
-    fetchData();
+    setFilteredRows(rows);
+    setLoading(false);
   }, [rows]);
 
   const handleRequestSort = (event, property) => {
@@ -149,6 +100,27 @@ export default function InvestmentTable({ rows }) {
       row.project.toLowerCase().includes(event.target.value.toLowerCase())
     );
     setFilteredRows(filtered);
+  };
+
+  const handleRowClick = async (projectKey) => {
+    setLoading(true);
+    const projectRef = doc(db, "contrato", projectKey);
+    const projectSnapshot = await getDoc(projectRef);
+    if (projectSnapshot.exists()) {
+      const projectData = projectSnapshot.data();
+      const projectRef = projectData.id_proyecto;
+      const projectDetails = await getDoc(projectRef);
+
+      if (projectDetails.exists()) {
+        const project = {
+          ...projectDetails.data(),
+          ...projectData
+        };
+        setSelectedProject(project);
+        setModalOpen(true);
+      }
+    }
+    setLoading(false);
   };
 
   const visibleRows = stableSort(filteredRows, getComparator(order, orderBy)).slice(
@@ -187,15 +159,39 @@ export default function InvestmentTable({ rows }) {
       }}>
         <TableContainer>
           <Table stickyHeader aria-label="sticky table">
-            <EnhancedTableHead
-              order={order}
-              orderBy={orderBy}
-              onRequestSort={handleRequestSort}
-              columns={columns}
-            />
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    align={column.align}
+                    sortDirection={orderBy === column.id ? order : false}
+                    sx={{
+                      background: getColor(theme, 'head'),
+                      color: theme.palette.text.primary,
+                      fontWeight: 'bold',
+                      textAlign: column.align,
+                    }}
+                  >
+                    <TableSortLabel
+                      active={orderBy === column.id}
+                      direction={orderBy === column.id ? order : 'asc'}
+                      onClick={(event) => handleRequestSort(event, column.id)}
+                    >
+                      {column.label}
+                      {orderBy === column.id ? (
+                        <Box component="span" sx={visuallyHidden}>
+                          {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                        </Box>
+                      ) : null}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
             <TableBody>
               {visibleRows.map((row) => (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.key}>
+                <TableRow hover role="checkbox" tabIndex={-1} key={row.key} onClick={() => handleRowClick(row.key)} sx={{ cursor: 'pointer' }}>
                   {columns.map((column) => {
                     const value = row[column.id];
                     return (
@@ -236,6 +232,11 @@ export default function InvestmentTable({ rows }) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+
+      {/* Modal */}
+      {selectedProject && (
+        <ProjectModal open={modalOpen} onClose={() => setModalOpen(false)} project={selectedProject} />
+      )}
     </Box>
   );
 }

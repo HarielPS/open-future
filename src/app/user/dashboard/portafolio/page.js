@@ -1,4 +1,3 @@
-// Component: Page.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { Box } from "@mui/system";
@@ -81,7 +80,7 @@ export default function Page() {
                   status: contractData.estado,
                   img: logo,
                   fecha_contrato: contractData.fecha_contrato.toDate().toLocaleDateString(),
-                  key: contractDocRef.id,
+                  key: contractDocRef.id, // Only save contract ID
                 });
               } else {
                 console.error("Inversor Data or Fecha is undefined for contract:", contractDocRef.id);
