@@ -254,7 +254,7 @@ export default function CompanyForm() {
   const handleAddSector = async () => {
     try {
       let updatedSubcategories = {};
-
+        // empresa
       if (isAddingSubcategory) {
         const sectorRef = doc(db, "sector", newSector);
         const sectorDoc = await getDoc(sectorRef);
@@ -481,7 +481,7 @@ export default function CompanyForm() {
                   {formErrors.industrySectors && <span style={{ color: 'red' }}>{formErrors.industrySectors}</span>}
                 </Grid>
                 {showAddSectorFields && (
-                  <Grid item xs={12}>
+                  <Grid item xs={12} >
                     <Box sx={{ mb: 2 }}>
                       {isAddingSubcategory ? (
                         <FormControl fullWidth required>
