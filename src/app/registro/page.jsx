@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from 'react';
-import { Box, Typography, Stack, useTheme, Button } from '@mui/material';
+import { Box, Typography, Stack, useTheme, Button, ButtonGroup } from '@mui/material';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import WalletConnect from '@/component/web3/wallet/WalletConnect';
 import ThemeToggle from "../ThemeToggle";
 import { db } from '../../../firebase';
-import { doc, addDoc, updateDoc, getDoc, collection } from 'firebase/firestore';
+import { doc, addDoc, collection } from 'firebase/firestore';
 import comprobarCuenta from '@/component/searchBD/comprobarcuenta';
 import WalletDisconnect, { clearLocalStorage } from '@/component/web3/wallet/WalletDisconnect';
 
@@ -13,43 +13,40 @@ const Registro = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [userId, setUserId] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('Inversor'); // Estado para manejar el rol seleccionado
+
+  const handleRoleChange = (role) => {
+    setSelectedRole(role);
+    localStorage.setItem('selectedRole', role);
+  };
 
   const handleWalletConnected = async (walletName, walletAddress) => {
     try {
       console.log('Wallet Connected:', { walletName, walletAddress });
-      let userDocRef;
-      let walletNumber = 1;
       const result = await comprobarCuenta();
 
       if (!result) {
         console.log('Wallet not found, creating new user...');
         
-        const userCollectionRef = collection(db, 'inversor');
-        userDocRef = await addDoc(userCollectionRef, {
+        // Decidir la colección según el rol seleccionado
+        const collectionName = selectedRole === 'Inversor' ? 'inversor' : 'empresa';
+        const userCollectionRef = collection(db, collectionName);
+        
+        // Crear un nuevo documento en la colección correspondiente
+        const userDocRef = await addDoc(userCollectionRef, {
           wallet: {
-            [walletName]: { [walletNumber]: walletAddress }
+            [walletName]: { 1: walletAddress } // Almacena la wallet con un identificador numérico
           }
         });
 
         localStorage.setItem('userId', userDocRef.id);
         setUserId(userDocRef.id);
 
-        console.log(`New user created with ID: ${userDocRef.id}`);
-
-        // userDocRef = doc(db, 'inversor', userDocRef.id);
-
-        // const userDoc = await getDoc(userDocRef);
-        // if (userDoc.exists() && userDoc.data().wallet && userDoc.data().wallet[walletName]) {
-        //   const existingWallets = userDoc.data().wallet[walletName];
-        //   walletNumber = Object.keys(existingWallets).length + 1;
-        // }
-
-        // await updateDoc(userDocRef, {
-        //   [`wallet.${walletName}.${walletNumber}`]: walletAddress
-        // });
-
-        console.log(`Wallet ${walletName} with address ${walletAddress} saved to Firebase.`);
-        window.location.href = '/registro/datos';
+        console.log(`New ${selectedRole} created with ID: ${userDocRef.id}`);
+        
+        // Redirigir a la página correspondiente según el rol
+        const redirectUrl = selectedRole === 'Inversor' ? '/registro/datos' : '/registro/empresa';
+        window.location.href = redirectUrl;
       } else {
         alert('Usuario ya registrado');
         clearLocalStorage();
@@ -84,7 +81,7 @@ const Registro = () => {
       >
         <Button
           variant="extended"
-          onClick={()=>window.location.href = '/'}
+          onClick={() => window.location.href = '/'}
           sx={{
             boxShadow: isDarkMode
               ? '0px 3px 5px -1px rgba(255, 255, 255, 0.2), 0px 6px 10px 0px rgba(255, 255, 255, 0.14), 0px 1px 18px 0px rgba(255, 255, 255, 0.12)'
@@ -115,8 +112,30 @@ const Registro = () => {
           color: isDarkMode ? theme.palette.text.primary : '#333'
         }}
       >
-        Registro
+        Registro ({selectedRole})
       </Typography>
+
+      {/* Role Selection Buttons */}
+      <ButtonGroup
+        disableElevation
+        variant="contained"
+        aria-label="role selection button group"
+        sx={{ mb: 4 }}
+      >
+        <Button
+          onClick={() => handleRoleChange('Inversor')}
+          disabled={selectedRole === 'Inversor'}
+        >
+          Inversor
+        </Button>
+        <Button
+          onClick={() => handleRoleChange('Empresa')}
+          disabled={selectedRole === 'Empresa'}
+        >
+          Empresa
+        </Button>
+      </ButtonGroup>
+
       <Box
         sx={{
           display: 'flex',

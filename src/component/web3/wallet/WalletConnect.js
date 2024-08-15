@@ -146,6 +146,11 @@ const WalletConnect = ({ onWalletConnected }) => {
     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
       <Box sx={{ flex: 1 }}>
         <Typography variant="h6" gutterBottom>Connect a Wallet</Typography>
+        {selectedWallet && (
+          <Button variant="contained" sx={{ mt: 4 }} onClick={handleResetSelection}>
+            Reset Selection
+          </Button>
+        )}
         <List>
           {wallets.map(wallet => (
             <ListItem 
@@ -163,11 +168,7 @@ const WalletConnect = ({ onWalletConnected }) => {
             </ListItem>
           ))}
         </List>
-        {selectedWallet && (
-          <Button variant="contained" sx={{ mt: 4 }} onClick={handleResetSelection}>
-            Reset Selection
-          </Button>
-        )}
+        
       </Box>
       <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
       <Box sx={{ flex: 1 }}>
@@ -180,7 +181,13 @@ const WalletConnect = ({ onWalletConnected }) => {
           <Typography variant="body1" gutterBottom>A New Way to Log In</Typography>
           <Typography variant="body2" sx={{ color: '#757575' }}>Instead of creating new accounts and passwords on every website, just connect your wallet.</Typography>
         </Box>
-        <Button variant="contained" sx={{ mt: 4 }}>Get a Wallet</Button>
+        <Button 
+          variant="contained" 
+          sx={{ mt: 4 }} 
+          onClick={() => window.location.href = 'https://materialbitcoin.com/blog/crear-wallet-criptomonedas/'}
+        >
+          Get a Wallet
+        </Button>
       </Box>
     </Box>
   );

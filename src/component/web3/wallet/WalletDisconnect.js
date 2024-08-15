@@ -26,6 +26,7 @@ export const clearLocalStorage = () => {
     localStorage.removeItem('connectedWalletAddress');
     localStorage.removeItem('connectedWalletName');
     localStorage.removeItem('userId');
+    // localStorage.removeItem('selectedRole');
     console.log('Local storage cleared');
 };
 
@@ -41,6 +42,7 @@ export const logoutexit = () => {
     localStorage.removeItem('connectedWalletAddress');
     localStorage.removeItem('connectedWalletName');
     localStorage.removeItem('userId');
+    // localStorage.removeItem('selectedRole');
     console.log('Local storage cleared');
     window.location.href = '/';
 };

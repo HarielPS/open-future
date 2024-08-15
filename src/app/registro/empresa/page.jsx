@@ -1,12 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Paper, Typography, Avatar, Button, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Chip } from "@mui/material";
-import { db, storage } from '../../../../../firebase';
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  Box, Grid, Paper, Typography, Avatar, Button, TextField, InputAdornment, FormControl,
+  InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Chip, Fab
+} from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import { db, storage } from '../../../../firebase';
+import { doc, updateDoc, getDocs, collection, addDoc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
+import Autocomplete from '@mui/material/Autocomplete';
 
 export default function CompanyForm() {
   const [userId, setUserId] = useState(null);
@@ -18,7 +23,12 @@ export default function CompanyForm() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-
+  const [allSectors, setAllSectors] = useState([]);
+  const [filteredSectors, setFilteredSectors] = useState([]);
+  const [showAddSectorFields, setShowAddSectorFields] = useState(false);
+  const [newSector, setNewSector] = useState('');
+  const [newSubcategory, setNewSubcategory] = useState('');
+  const [isAddingSubcategory, setIsAddingSubcategory] = useState(false);
   const [formValues, setFormValues] = useState({
     email: '',
     companyType: '',
@@ -32,32 +42,77 @@ export default function CompanyForm() {
   });
 
   const [formErrors, setFormErrors] = useState({});
-  
-  const handleProfileImgChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        try {
-            if (!userId) {
-                throw new Error("No se encontró el ID de usuario en el localStorage");
-            }
-            const storageRef = ref(storage, `empresa/${userId}/profile.jpg`);
-            await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(storageRef);
-            console.log('Download URL:', downloadURL); // Asegúrate de que la URL sea correcta
-            setProfileImg(downloadURL);
-            const docRef = doc(db, "empresa", userId);
-            await updateDoc(docRef, { img: downloadURL });
-        } catch (error) {
-            console.error("Error subiendo la imagen de perfil: ", error);
-        }
-    }
-};
-
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     setUserId(userId);
+    fetchSectors();
   }, []);
+
+  const fetchSectors = async () => {
+    try {
+      const sectorCollection = collection(db, "sector");
+      const sectorSnapshot = await getDocs(sectorCollection);
+      const sectors = sectorSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        subcategories: Object.values(doc.data()).slice(1),
+      }));
+      setAllSectors(sectors);
+    } catch (error) {
+      console.error("Error fetching sectors: ", error);
+    }
+  };
+
+  useEffect(() => {
+    if (sectorInput) {
+      const filtered = allSectors.flatMap((sector) => [
+        { ...sector, isCategory: true },
+        ...sector.subcategories.map(sub => ({ id: sub, isCategory: false })),
+      ]).filter((item) =>
+        item.id.toLowerCase().includes(sectorInput.toLowerCase())
+      );
+      setFilteredSectors(filtered);
+    } else {
+      setFilteredSectors(allSectors.flatMap((sector) => [
+        { ...sector, isCategory: true },
+        ...sector.subcategories.map(sub => ({ id: sub, isCategory: false })),
+      ]));
+    }
+  }, [sectorInput, allSectors]);
+
+  const handleSectorChange = (event, value) => {
+    setSectorInput(value);
+  };
+
+  const handleSectorSelect = (event, value) => {
+    if (value && !selectedSectors.some((sector) => sector.id === value.id)) {
+      setSelectedSectors([...selectedSectors, value]);
+    }
+    setSectorInput('');
+  };
+
+  const handleSectorDelete = (sectorToDelete) => {
+    setSelectedSectors((sectors) => sectors.filter((sector) => sector !== sectorToDelete));
+  };
+
+  const handleProfileImgChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        if (!userId) {
+          throw new Error("No se encontró el ID de usuario en el localStorage");
+        }
+        const storageRef = ref(storage, `empresa/${userId}/profile.jpg`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        setProfileImg(downloadURL);
+        const docRef = doc(db, "empresa", userId);
+        await updateDoc(docRef, { img: downloadURL });
+      } catch (error) {
+        console.error("Error subiendo la imagen de perfil: ", error);
+      }
+    }
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -144,21 +199,6 @@ export default function CompanyForm() {
     setShowOtherCompanyType(value === "Otro");
   };
 
-  const handleSectorChange = (event) => {
-    setSectorInput(event.target.value);
-  };
-
-  const handleSectorSelect = (sector) => {
-    if (!selectedSectors.includes(sector)) {
-      setSelectedSectors([...selectedSectors, sector]);
-    }
-    setSectorInput('');
-  };
-
-  const handleSectorDelete = (sectorToDelete) => {
-    setSelectedSectors((sectors) => sectors.filter((sector) => sector !== sectorToDelete));
-  };
-
   const handleNewPasswordChange = (e) => {
     setNewPassword(e.target.value);
     checkPasswordMatch(e.target.value, confirmPassword);
@@ -182,7 +222,7 @@ export default function CompanyForm() {
       try {
         const dataToSave = {
           ...formValues,
-          industrySectors: selectedSectors,
+          industrySectors: selectedSectors.map((sector) => sector.id),
           password: newPassword
         };
         const docRef = doc(db, "empresa", userId);
@@ -193,6 +233,65 @@ export default function CompanyForm() {
         console.error("Error al actualizar el documento:", error);
       }
     }
+  };
+
+  const handleAddSectorClick = () => {
+    setShowAddSectorFields(true);
+    setIsAddingSubcategory(false);
+  };
+
+  const handleCancelAddSector = () => {
+    setShowAddSectorFields(false);
+    setNewSector('');
+    setNewSubcategory('');
+  };
+
+  const handleAddSubcategoryClick = () => {
+    setIsAddingSubcategory(true);
+    setShowAddSectorFields(true);
+  };
+
+  const handleAddSector = async () => {
+    try {
+      let updatedSubcategories = {};
+
+      if (isAddingSubcategory) {
+        const sectorRef = doc(db, "sector", newSector);
+        const sectorDoc = await getDoc(sectorRef);
+        if (sectorDoc.exists()) {
+          updatedSubcategories = sectorDoc.data();
+          const lastKey = Math.max(...Object.keys(updatedSubcategories).map(Number));
+          updatedSubcategories[lastKey + 1] = newSubcategory;
+        }
+        await updateDoc(sectorRef, updatedSubcategories);
+      } else {
+        const sectorRef = doc(db, "sector", newSector);
+        updatedSubcategories = { 0: newSector };
+        if (newSubcategory) {
+          updatedSubcategories[1] = newSubcategory;
+        }
+        await setDoc(sectorRef, updatedSubcategories);
+      }
+
+      setNewSector('');
+      setNewSubcategory('');
+      setShowAddSectorFields(false);
+      fetchSectors();
+    } catch (error) {
+      console.error("Error adding sector or subcategory:", error);
+    }
+  };
+
+  const renderOption = (props, option) => {
+    return (
+      <li {...props} key={option.id}>
+        {option.isCategory ? (
+          <strong>{option.id}</strong>
+        ) : (
+          <span style={{ marginLeft: 20 }}>{option.id}</span>
+        )}
+      </li>
+    );
   };
 
   return (
@@ -347,24 +446,33 @@ export default function CompanyForm() {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    required
-                    label="Sector de la Industria"
-                    value={sectorInput}
-                    onChange={handleSectorChange}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && sectorInput) {
-                        handleSectorSelect(sectorInput);
-                      }
-                    }}
-                    helperText="Presiona Enter para añadir un sector"
-                  />
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Autocomplete
+                      options={filteredSectors}
+                      getOptionLabel={(option) => option.id}
+                      onInputChange={handleSectorChange}
+                      inputValue={sectorInput}
+                      onChange={handleSectorSelect}
+                      renderOption={renderOption}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Sector de la Industria"
+                          helperText="Selecciona o escribe para buscar"
+                          fullWidth
+                        />
+                      )}
+                      sx={{ flex: 1 }}
+                    />
+                    <Fab color="primary" aria-label="add" onClick={handleAddSectorClick} sx={{ ml: 2 }}>
+                      <AddIcon />
+                    </Fab>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems:'Center', mt: 2 }}>
                     {selectedSectors.map((sector, index) => (
                       <Chip
                         key={index}
-                        label={sector}
+                        label={sector.id}
                         onDelete={() => handleSectorDelete(sector)}
                         sx={{ margin: 0.5 }}
                       />
@@ -372,6 +480,62 @@ export default function CompanyForm() {
                   </Box>
                   {formErrors.industrySectors && <span style={{ color: 'red' }}>{formErrors.industrySectors}</span>}
                 </Grid>
+                {showAddSectorFields && (
+                  <Grid item xs={12}>
+                    <Box sx={{ mb: 2 }}>
+                      {isAddingSubcategory ? (
+                        <FormControl fullWidth required>
+                          <InputLabel id="sector-select-label">Seleccionar Sector</InputLabel>
+                          <Select
+                            labelId="sector-select-label"
+                            value={newSector}
+                            onChange={(e) => setNewSector(e.target.value)}
+                          >
+                            {allSectors.map((sector) => (
+                              <MenuItem key={sector.id} value={sector.id}>
+                                {sector.id}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        <Box>
+                        <TextField
+                          fullWidth
+                          label="Sector"
+                          value={newSector}
+                          onChange={(e) => setNewSector(e.target.value)}
+                          sx={{ mb: 2 }}
+                        />
+                        <Fab color="primary" aria-label="add" onClick={handleAddSubcategoryClick} sx={{ ml: 2 }}>
+                            <AddIcon />
+                        </Fab>
+                        </Box>
+                      )}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                        <TextField
+                          fullWidth
+                          label="Subcategoría"
+                          value={newSubcategory}
+                          onChange={(e) => setNewSubcategory(e.target.value)}
+                        />
+                        {!isAddingSubcategory && (
+                          <Fab color="primary" aria-label="add" onClick={handleAddSubcategoryClick} sx={{ ml: 2 }}>
+                            <AddIcon />
+                          </Fab>
+                        )}
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                        <Button variant="contained" onClick={handleAddSector}>
+                          Guardar {isAddingSubcategory ? "Subcategoría" : "Sector"}
+                        </Button>
+                        <Button variant="outlined" onClick={handleCancelAddSector}>
+                          Cancelar
+                        </Button>
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
                 <Grid item xs={12}>
                   <FormControl fullWidth required>
                     <InputLabel id="employees-label">Número de Empleados</InputLabel>

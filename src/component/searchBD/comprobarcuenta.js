@@ -1,26 +1,23 @@
 "use client";
 import { db } from '../../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
-// import { clearLocalStorage } from '../web3/wallet/WalletDisconnect';
 
-/**
- * Comprueba si una wallet ya está registrada en la colección de inversores.
- * 
- * @returns {Promise<boolean>} - Devuelve true si la wallet está registrada, de lo contrario false.
- */
 const comprobarCuenta = async () => {
-  console.log('Executing comprobarCuenta...');
+  console.log('Ejecutando comprobarCuenta...');
   try {
     const walletAddress = localStorage.getItem('connectedWalletAddress');
     const walletName = localStorage.getItem('connectedWalletName');
+    const selectedRole = localStorage.getItem('selectedRole'); // Obtén el rol seleccionado
 
-    if (!walletAddress || !walletName) {
-      console.log('No se encontraron los datos de la wallet en el almacenamiento local.');
+    if (!walletAddress || !walletName || !selectedRole) {
+      console.log('No se encontraron los datos necesarios en el almacenamiento local.');
       return false;
     }
 
-    const inversoresCollectionRef = collection(db, 'inversor');
-    const querySnapshot = await getDocs(inversoresCollectionRef);
+    // Decidir en qué colección buscar dependiendo del rol
+    const collectionName = selectedRole === 'Inversor' ? 'inversor' : 'empresa';
+    const collectionRef = collection(db, collectionName);
+    const querySnapshot = await getDocs(collectionRef);
 
     let found = false;
     let userId = null;
@@ -42,7 +39,6 @@ const comprobarCuenta = async () => {
 
     if (found) {
       console.log('Wallet encontrada');
-    //   clearLocalStorage();
       return true;
     } else {
       console.log('Wallet no encontrada');
