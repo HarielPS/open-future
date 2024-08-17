@@ -58,6 +58,7 @@ export default function AccountSettings() {
   const [showPassword, setShowPassword] = useState(false);
   const [wallets, setWallets] = useState(new Map());
   const [profileImg, setProfileImg] = useState('');
+  const [financialDocURL, setFinancialDocURL] = useState('');
   const [profileData, setProfileData] = useState({
     email: '',
     companyType: '',
@@ -68,7 +69,8 @@ export default function AccountSettings() {
     employees: '',
     address: '',
     website: '',
-    currentPassword: ''
+    currentPassword: '',
+    financialDoc: ''
   });
   const [editProfileData, setEditProfileData] = useState({ ...profileData });
   const [newPassword, setNewPassword] = useState('');
@@ -183,7 +185,7 @@ export default function AccountSettings() {
             employees: data.employees || '',
             address: data.address || '',
             website: data.website || '',
-            currentPassword: data.password || ''
+            currentPassword: data.password || '',
           });
     
           setEditProfileData({
@@ -195,10 +197,11 @@ export default function AccountSettings() {
             industrySectors: industrySectors,
             employees: data.employees || '',
             address: data.address || '',
-            website: data.website || ''
+            website: data.website || '',
           });
     
           setProfileImg(data.img || '');
+          setFinancialDocURL(data.financialDoc || '');
     
           const sectorNames = await fetchSectorNames(industrySectors);
           setSectorNames(sectorNames);
@@ -218,6 +221,27 @@ export default function AccountSettings() {
     fetchData();
     fetchSectors();
   }, [userId]);
+
+  const handleFinancialDocChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        if (!userId) {
+          throw new Error("No se encontró el ID de usuario en el localStorage");
+        }
+
+        const storageRef = ref(storage, `empresa/${userId}/estado_financiero/${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        setFinancialDocURL(downloadURL);
+        const docRef = doc(db, "empresa", userId);
+        await updateDoc(docRef, { financialDoc: downloadURL });
+
+      } catch (error) {
+        console.error("Error subiendo el estado financiero: ", error);
+      }
+    }
+  };
 
   const fetchSectors = async () => {
     try {
@@ -883,6 +907,52 @@ export default function AccountSettings() {
         </List>
       </Grid>
 
+      {/* Estado Financiero Section */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Estado Financiero
+            </Typography>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              Revisa y actualiza tu estado financiero desde aquí
+            </Typography>
+            
+            {/* Vista previa del documento financiero */}
+            {financialDocURL ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                <iframe
+                  src={financialDocURL}
+                  style={{ width: '100%', height: '400px', border: 'none' }}
+                  title="Vista previa del documento financiero"
+                ></iframe>
+              </Box>
+            ) : (
+              <Typography variant="caption" display="block" sx={{ mt: 2, color: 'red' }} align="center">
+                No se ha subido ningún documento de estado financiero.
+              </Typography>
+            )}
+
+            {/* Botón para reemplazar el documento */}
+            {editMode && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  color="primary"
+                  sx={{ mr: 2 }}
+                >
+                  Reemplazar Documento
+                  <input
+                    type="file"
+                    hidden
+                    accept="application/pdf, image/*"
+                    onChange={handleFinancialDocChange}
+                  />
+                </Button>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
 
       {/* Confirmation Dialog */}
       <Dialog

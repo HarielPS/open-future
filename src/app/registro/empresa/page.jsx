@@ -17,6 +17,8 @@ import Autocomplete from '@mui/material/Autocomplete';
 export default function CompanyForm() {
   const [userId, setUserId] = useState(null);
   const [profileImg, setProfileImg] = useState('');
+  const [financialDoc, setFinancialDoc] = useState(null); // Estado para el documento financiero
+  const [financialDocURL, setFinancialDocURL] = useState(''); // Estado para la URL del documento financiero
   const [isChecked, setIsChecked] = useState(false);
   const [sectorInput, setSectorInput] = useState('');
   const [selectedSectors, setSelectedSectors] = useState([]);
@@ -106,7 +108,7 @@ export default function CompanyForm() {
         if (!userId) {
           throw new Error("No se encontró el ID de usuario en el localStorage");
         }
-        const storageRef = ref(storage, `empresa/${userId}/profile.jpg`);
+        const storageRef = ref(storage, `empresa/${userId}/profile_image/profile.jpg`);
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
         setProfileImg(downloadURL);
@@ -118,20 +120,39 @@ export default function CompanyForm() {
     }
   };
 
+  const handleFinancialDocChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        if (!userId) {
+          throw new Error("No se encontró el ID de usuario en el localStorage");
+        }
+        const storageRef = ref(storage, `empresa/${userId}/estado_financiero/${file.name}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        setFinancialDocURL(downloadURL);
+        const docRef = doc(db, "empresa", userId);
+        await updateDoc(docRef, { financialDoc: downloadURL });
+      } catch (error) {
+        console.error("Error subiendo el estado financiero: ", error);
+      }
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
     const currentYear = new Date().getFullYear();
-
+  
     if (!formValues.nombre) {
       errors.nombre = 'El nombre de la Empresa es requerido';
     }
-
+  
     if (!formValues.email) {
       errors.email = 'El correo es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formValues.email)) {
       errors.email = 'El correo es inválido';
     }
-
+  
     if (!newPassword) {
       errors.password = 'La contraseña es requerida';
     } else if (newPassword.length < 8) {
@@ -141,54 +162,58 @@ export default function CompanyForm() {
     } else if (!/[0-9]/.test(newPassword)) {
       errors.password = 'La contraseña debe contener al menos un número';
     }
-
+  
     if (!confirmPassword) {
       errors.confirmPassword = 'Debes confirmar la contraseña';
     } else if (newPassword !== confirmPassword) {
       errors.confirmPassword = 'Las contraseñas no coinciden';
     }
-
+  
     if (!formValues.companyType) {
       errors.companyType = 'El tipo de empresa es requerido';
     }
-
+  
     if (showOtherCompanyType && !formValues.otherCompanyType) {
       errors.otherCompanyType = 'El otro tipo de empresa es requerido';
     }
-
+  
     if (!formValues.fiscalId) {
       errors.fiscalId = 'El Número de Identificación Fiscal es requerido';
     }
-
+  
     if (!formValues.foundationYear) {
       errors.foundationYear = 'El año de fundación es requerido';
     } else if (isNaN(formValues.foundationYear.getFullYear()) || formValues.foundationYear.getFullYear() > currentYear || formValues.foundationYear.getFullYear() < 1940) {
       errors.foundationYear = `El año de fundación debe ser un número válido entre 1940 y ${currentYear}`;
     }
-
+  
     if (selectedSectors.length === 0) {
       errors.industrySectors = 'Debes seleccionar al menos un sector de la industria';
     }
-
+  
     if (!formValues.employees) {
       errors.employees = 'El número de empleados es requerido';
     }
-
+  
     if (!formValues.address) {
       errors.address = 'La dirección es requerida';
     }
-
+  
     if (formValues.website && !/^https?:\/\/.+/.test(formValues.website)) {
       errors.website = 'La página web debe ser un link válido';
     }
-
+  
     if (!isChecked) {
       errors.checkbox = 'Debes aceptar los términos y condiciones';
     }
-
+  
+    if (!financialDocURL) { // Validar que se haya subido el documento financiero
+      errors.financialDoc = 'Debes subir un documento de estado financiero.';
+    }
+  
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  };  
 
   const handleCheckboxChange = (event) => {
     setIsChecked(event.target.checked);
@@ -242,6 +267,7 @@ export default function CompanyForm() {
                 industrySectors, // Guardar las referencias en el formato adecuado
                 password: newPassword,
                 website: formValues.website || '', // Si no hay valor, se guarda como ''
+                financialDoc: financialDocURL, // Guardar la URL del documento financiero
             };
 
             delete dataToSave.otherCompanyType; // Remover el campo otherCompanyType antes de guardar
@@ -257,8 +283,6 @@ export default function CompanyForm() {
         }
     }
 };
-
-  
 
   const handleAddSectorClick = () => {
     setShowAddSectorFields(true);
@@ -593,7 +617,6 @@ export default function CompanyForm() {
                   </Grid>
                 )}
 
-
                 <Grid item xs={12}>
                   <FormControl fullWidth required>
                     <InputLabel id="employees-label">Número de Empleados</InputLabel>
@@ -639,6 +662,46 @@ export default function CompanyForm() {
                     helperText={formErrors.website}
                   />
                 </Grid>
+
+                {/* input estado financiero */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom align="center">
+                    Subir Estado Financiero
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <Button
+                      variant="contained"
+                      component="label"
+                      color="primary"
+                      sx={{ mr: 2 }}
+                    >
+                      Subir Documento
+                      <input
+                        type="file"
+                        hidden
+                        accept="application/pdf, image/*"
+                        onChange={handleFinancialDocChange}
+                      />
+                    </Button>
+                  </Box>
+
+                  {financialDocURL ? (
+                    <Typography variant="caption" display="block" sx={{ mt: 2 }} align="center">
+                      Documento subido: <a href={financialDocURL} target="_blank" rel="noopener noreferrer">Ver documento</a>
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" display="block" sx={{ mt: 2, color: 'red' }} align="center">
+                      {formErrors.financialDoc} {/* Mostrar mensaje de error si no se ha subido */}
+                    </Typography>
+                  )}
+
+                  <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+                    ¿Necesitas una plantilla? Llenala y descargala <a href="https://docs.google.com/spreadsheets/d/1zmxohtDU2FGpEtVz_SkBEZ0vRSg0xhNk4nUgh5FEHJY/edit?usp=sharing" target="_blank" rel="noopener noreferrer">aquí</a>.
+                  </Typography>
+                </Grid>
+
+
                 <Grid item xs={12}>
                   <FormControlLabel
                     control={

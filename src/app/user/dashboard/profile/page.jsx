@@ -345,7 +345,9 @@ export default function AccountSettings() {
           startIcon={<EditIcon />}
           onClick={handleEditClick}
           disabled={editMode}
-        />
+        >
+          Editar
+        </Button>
       </Box>
 
       <Divider />
