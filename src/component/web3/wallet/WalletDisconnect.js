@@ -42,7 +42,7 @@ export const logoutexit = () => {
     localStorage.removeItem('connectedWalletAddress');
     localStorage.removeItem('connectedWalletName');
     localStorage.removeItem('userId');
-    // localStorage.removeItem('selectedRole');
+    localStorage.removeItem('selectedRole');
     console.log('Local storage cleared');
     window.location.href = '/';
 };
