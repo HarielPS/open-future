@@ -46,11 +46,11 @@ export default function SideBar({ visible, handleVisible }) {
 
   const fetchUserInfo = async (userId) => {
     try {
-      const userDocRef = doc(db, 'inversor', userId);
+      const userDocRef = doc(db, 'empresa', userId);
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        const fullName = `${userData.nombre} ${userData.apellidos}`;
+        const fullName = `${userData.nombre}`;
         setUserInfo(prevState => ({
           ...prevState,
           name: fullName,
@@ -164,7 +164,7 @@ export default function SideBar({ visible, handleVisible }) {
                     v-ripple
                     className=" flex align-items-center cursor-pointer p-3 gap-2 border-round text-700 hover:surface-100 transition-duration-150 transition-colors p-ripple"
                     style={{ color: theme.palette.text.primary }}
-                    href="/user/dashboard/profile"
+                    href="/user/empresa/profile"
                   >
                     <Avatar image={userInfo.image} shape="circle" />
                     <span className="font-bold" sx={{color:theme.palette.text.primary}}>{userInfo.name}</span>

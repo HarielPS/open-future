@@ -254,7 +254,7 @@ const MaximizableDemo = ({ project, visible, onHide }) => {
         const nuevoMontoRecaudado = parseFloat(projectData.monto_recaudado || 0) + parseFloat(invert);
         console.log(nuevoMontoRecaudado);
         console.log(projectData.monto_pedido);
-        alert("alto");
+        // alert("alto");
 
         const updates = {
             monto_recaudado: nuevoMontoRecaudado

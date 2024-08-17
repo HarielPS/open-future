@@ -1,15 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useTheme } from '@mui/material/styles';
-import SideBar from "@/components/navigation/Sidebar";
+import SideBar from "@/components/navigation/SidebarEmpresa";
 import Navbar from "@/components/navigation/Navbar";
 import WalletConnect from "@/component/web3/wallet/WalletConnect";
 import { Modal, Backdrop, Box, Button, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import Image from "next/image";
-import styles from "./Layout.module.css"; // Import styles for the modal
+import styles from "./Layout.module.css"; 
 import WalletBalance from "@/component/web3/wallet/WalletBalance";
-import WalletSwitcher from "@/component/web3/wallet/WalletSwitcher";
+import WalletSwitcher from "@/component/web3/wallet/WalletSwitcherEmpresa";
 import NetworkAndBalance from "@/component/web3/wallet/Balance";
 
 export default function Layout({ children }) {

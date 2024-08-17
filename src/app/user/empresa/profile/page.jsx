@@ -50,11 +50,11 @@ export default function AccountSettings() {
   const [dense, setDense] = useState(false);
   const [secondary, setSecondary] = useState(false);
   const [open, setOpen] = useState(false);
-  const [dialogType, setDialogType] = useState(''); // 'save', 'cancel' o 'delete'
+  const [dialogType, setDialogType] = useState(''); 
   const [editMode, setEditMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState(''); // Estado para el mensaje del Snackbar
+  const [snackbarMessage, setSnackbarMessage] = useState(''); 
   const [showPassword, setShowPassword] = useState(false);
   const [wallets, setWallets] = useState(new Map());
   const [profileImg, setProfileImg] = useState('');
@@ -301,35 +301,49 @@ export default function AccountSettings() {
 
     let walletFound = false;
 
-    updatedWallets.forEach((walletMap, provider) => {
-      if (walletMap[selectedItem.split('-')[1]]) {
-        delete walletMap[selectedItem.split('-')[1]];
-        walletFound = true;
-      }
-    });
+    const [provider, key] = selectedItem.split('-');
 
-    if (walletFound) {
-      setWallets(updatedWallets);
+    if (updatedWallets.has(provider)) {
+        const walletMap = updatedWallets.get(provider);
+        
+        if (walletMap[key]) {
+            delete walletMap[key];
+            walletFound = true;
 
-      const updatedWalletMap = {};
-      updatedWallets.forEach((walletMap, provider) => {
-        updatedWalletMap[provider] = { ...walletMap };
-      });
+            // Si después de eliminar, no queda ninguna wallet para este proveedor, eliminamos la entrada del proveedor.
+            if (Object.keys(walletMap).length === 0) {
+                updatedWallets.delete(provider);
+            } else {
+                updatedWallets.set(provider, { ...walletMap });
+            }
+        }
+    }
 
-      try {
-        const docRef = doc(db, "empresa", userId);
-        await updateDoc(docRef, { wallet: updatedWalletMap });
-        console.log('Wallet eliminada de Firestore');
-      } catch (error) {
-        console.error('Error eliminando la wallet:', error);
-      }
+    // Verifica el número total de wallets restantes
+    const totalRemainingWallets = [...updatedWallets.values()].reduce((sum, walletMap) => sum + Object.keys(walletMap).length, 0);
+
+    if (walletFound && totalRemainingWallets > 0) {
+        setWallets(updatedWallets);
+
+        const updatedWalletMap = {};
+        updatedWallets.forEach((walletMap, provider) => {
+            updatedWalletMap[provider] = { ...walletMap };
+        });
+
+        try {
+            const docRef = doc(db, "empresa", userId);
+            await updateDoc(docRef, { wallet: updatedWalletMap });
+            console.log('Wallet eliminada de Firestore');
+        } catch (error) {
+            console.error('Error eliminando la wallet:', error);
+        }
     } else {
-      console.log('No se encontró la wallet para eliminar.');
+        console.log('No se encontró la wallet para eliminar o no se puede eliminar la última wallet.');
     }
 
     setOpen(false);
     setSelectedItem(null);
-  };
+};
 
   const handleSaveClick = async () => {
     if (!validateForm()) return;
@@ -832,39 +846,43 @@ export default function AccountSettings() {
           Wallets
         </Typography>
         <List dense={dense}>
-          {[...wallets.entries()].map(([provider, walletMap]) =>
-            Object.entries(walletMap).map(([key, address], index, array) => (
-              <ListItem
-                key={`${provider}-${key}`}
-                secondaryAction={
-                  array.length > 1 && ( 
-                    <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(`${provider}-${key}`)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  )
-                }
-                onClick={(event) => handleCopyClick(event, address)}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: getColor(theme, 'third'),
-                    cursor: 'pointer',
+          {(() => {
+            const totalWallets = [...wallets.values()].reduce((sum, walletMap) => sum + Object.keys(walletMap).length, 0);
+            return [...wallets.entries()].map(([provider, walletMap]) =>
+              Object.entries(walletMap).map(([key, address]) => (
+                <ListItem
+                  key={`${provider}-${key}`}
+                  secondaryAction={
+                    totalWallets > 1 && ( 
+                      <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteClick(`${provider}-${key}`)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )
                   }
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar>
-                    <AccountBalanceWalletIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={`${provider} Wallet ${key}`}
-                  secondary={address}
-                />
-              </ListItem>
-            ))
-          )}
+                  onClick={(event) => handleCopyClick(event, address)}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: getColor(theme, 'third'),
+                      cursor: 'pointer',
+                    }
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar>
+                      <AccountBalanceWalletIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={`${provider} Wallet ${key}`}
+                    secondary={address}
+                  />
+                </ListItem>
+              ))
+            );
+          })()}
         </List>
       </Grid>
+
 
       {/* Confirmation Dialog */}
       <Dialog
