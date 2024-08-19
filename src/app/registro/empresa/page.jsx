@@ -122,15 +122,32 @@ export default function CompanyForm() {
 
   const handleFinancialDocChange = async (e) => {
     const file = e.target.files[0];
+    
     if (file) {
+      // Validar que el archivo sea JPG o PNG
+      const validTypes = ['image/jpeg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        alert("Solo se permiten archivos JPG o PNG.");
+        return;
+      }
+  
+      // Validar que el archivo no supere los 20 MB
+      const maxSize = 20 * 1024 * 1024; // 20 MB en bytes
+      if (file.size > maxSize) {
+        alert("El archivo no debe superar los 20 MB.");
+        return;
+      }
+  
       try {
         if (!userId) {
           throw new Error("No se encontró el ID de usuario en el localStorage");
         }
+  
         const storageRef = ref(storage, `empresa/${userId}/estado_financiero/${file.name}`);
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
         setFinancialDocURL(downloadURL);
+  
         const docRef = doc(db, "empresa", userId);
         await updateDoc(docRef, { financialDoc: downloadURL });
       } catch (error) {
@@ -138,6 +155,7 @@ export default function CompanyForm() {
       }
     }
   };
+  
 
   const validateForm = () => {
     const errors = {};
@@ -697,7 +715,7 @@ export default function CompanyForm() {
                   )}
 
                   <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-                    ¿Necesitas una plantilla? Llenala y descargala <a href="https://docs.google.com/spreadsheets/d/1zmxohtDU2FGpEtVz_SkBEZ0vRSg0xhNk4nUgh5FEHJY/edit?usp=sharing" target="_blank" rel="noopener noreferrer">aquí</a>.
+                    ¿Necesitas una plantilla? Llenala y descargala <a href="https://docs.google.com/spreadsheets/d/1Cf8FO5_sLkP7XNHzUvSLXbUQv9F4rPVDtLKKLSNYrbE/edit?usp=sharing" target="_blank" rel="noopener noreferrer">aquí</a>.
                   </Typography>
                 </Grid>
 
