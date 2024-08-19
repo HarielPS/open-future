@@ -1,8 +1,14 @@
-import React from 'react'
+"use client"
+import ProjectCard from '@/components/empresa/AñadirProyecto';
+import { Box } from '@mui/system';
+import React from 'react';
+
 
 const page = () => {
   return (
-    <div>empresa</div>
+    <Box sx={{mt:5}}>
+      <ProjectCard/>
+    </Box>
   )
 }
 

@@ -8,19 +8,16 @@ import { StyleClass } from "primereact/styleclass";
 import "/node_modules/primeflex/primeflex.css";
 import Image from "next/image";
 import ItemSB from "./ItemSB";
-
-import 'primereact/resources/themes/saga-blue/theme.css'; // Importa el tema de PrimeReact
-import 'primereact/resources/primereact.min.css'; // Importa los estilos de PrimeReact
-import 'primeicons/primeicons.css'; // Importa los iconos de PrimeIcons
+import 'primereact/resources/themes/saga-blue/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
 import { useTheme } from '@mui/material/styles';
-import { Box, color } from "@mui/system";
+import { Box } from "@mui/system";
 import { Typography } from "@mui/material";
-import ListItemText from '@mui/material/ListItemText';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { db } from '../../../firebase';
 import { getDoc, doc } from 'firebase/firestore';
 import { logoutexit } from "@/component/web3/wallet/WalletDisconnect";
-
 
 export default function SideBar({ visible, handleVisible }) {
   const theme = useTheme();
@@ -29,16 +26,12 @@ export default function SideBar({ visible, handleVisible }) {
     name: "Master chief",
   });
   const btnRef1 = useRef(null);
-  const btnRef2 = useRef(null);
-  const btnRef3 = useRef(null);
   const btnRef4 = useRef(null);
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    // Leer los datos de localStorage
     const storedUserId = localStorage.getItem('userId');
     setUserId(storedUserId);
-
     if (storedUserId) {
       fetchUserInfo(storedUserId);
     }
@@ -54,7 +47,7 @@ export default function SideBar({ visible, handleVisible }) {
         setUserInfo(prevState => ({
           ...prevState,
           name: fullName,
-          image:userData.img,
+          image: userData.img,
         }));
       } else {
         console.log('No such document!');
@@ -80,8 +73,7 @@ export default function SideBar({ visible, handleVisible }) {
           >
             <Box
               id="app-sidebar-2"
-              // className="surface-section h-screen block flex-shrink-0 absolute lg:static left-0 top-0 z-1 border-right-1 surface-border select-none"
-              sx={{ width: "100%",backgroundColor: theme.palette.background.default, color: theme.palette.text.primary }}
+              sx={{ width: "100%", backgroundColor: theme.palette.background.default, color: theme.palette.text.primary }}
             >
               <div className="flex flex-column h-full">
                 <div className="flex align-items-center justify-content-between px-4 pt-3 flex-shrink-0">
@@ -120,7 +112,7 @@ export default function SideBar({ visible, handleVisible }) {
                           className="p-ripple p-3 flex align-items-center justify-content-between text-600 cursor-pointer"
                           style={{ color: theme.palette.text.primary }}
                         >
-                          <Typography variant="h7" sx={{color:theme.palette.text.primary}}>MIS PROYECTOS</Typography>
+                          <Typography variant="h7" sx={{ color: theme.palette.text.primary }}>MIS PROYECTOS</Typography>
                           <i className="pi pi-chevron-down"></i>
                           <Ripple />
                         </div>
@@ -147,7 +139,7 @@ export default function SideBar({ visible, handleVisible }) {
                           className="p-ripple p-3 flex align-items-center justify-content-between text-600 cursor-pointer"
                           style={{ color: theme.palette.text.primary }}
                         >
-                          <Typography variant="h7" sx={{color:theme.palette.text.primary}}>INVERSIONES</Typography>
+                          <Typography variant="h7" sx={{ color: theme.palette.text.primary }}>INVERSIONES</Typography>
                           <i className="pi pi-chevron-down"></i>
                           <Ripple />
                         </div>
@@ -167,12 +159,12 @@ export default function SideBar({ visible, handleVisible }) {
                     href="/user/empresa/profile"
                   >
                     <Avatar image={userInfo.image} shape="circle" />
-                    <span className="font-bold" sx={{color:theme.palette.text.primary}}>{userInfo.name}</span>
+                    <span className="font-bold" sx={{ color: theme.palette.text.primary }}>{userInfo.name}</span>
                   </a>
                 </div>
                 <Button className="flex items-center bg-blue-600 hover:bg-blue-800 justify-center text-white py-2 px-4 rounded-t-xl" onClick={handlelogout}>
-                  <Box sx={{marginRight:2}}>
-                    <LogoutIcon/>
+                  <Box sx={{ marginRight: 2 }}>
+                    <LogoutIcon />
                   </Box>
                   <span>Cerrar sesión</span>
                 </Button>

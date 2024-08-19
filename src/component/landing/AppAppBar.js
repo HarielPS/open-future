@@ -1,5 +1,4 @@
-"use client";
-import * as React from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
@@ -13,6 +12,7 @@ import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
 import ToggleColorMode from './ToggleColorMode';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const logoStyle = {
   width: '140px',
@@ -26,14 +26,6 @@ function AppAppBar() {
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
-
-  const handleregistrate = () => {
-    window.location.href = "/registro";
-  }
-
-  const handleentra = () => {
-    window.location.href = "/login";
-  }
 
   const scrollToSection = (sectionId) => {
     const sectionElement = document.getElementById(sectionId);
@@ -142,28 +134,24 @@ function AppAppBar() {
               }}
             >
               <ToggleColorMode />
-              <Button
-                color="primary"
-                variant="text"
-                size="small"
-                component="a"
-                href="/material-ui/getting-started/templates/sign-in/"
-                target="_blank"
-                onClick={handleentra}
-              >
-                Entrar
-              </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                size="small"
-                component="a"
-                href="/material-ui/getting-started/templates/sign-up/"
-                target="_blank"
-                onClick={handleregistrate}
-              >
-                Registrate
-              </Button>
+              <Link href="/login" passHref>
+                <Button
+                  color="primary"
+                  variant="text"
+                  size="small"
+                >
+                  Entrar
+                </Button>
+              </Link>
+              <Link href="/registro" passHref>
+                <Button
+                  color="primary"
+                  variant="contained"
+                  size="small"
+                >
+                  Registrate
+                </Button>
+              </Link>
             </Box>
             <Box sx={{ display: { sm: '', md: 'none' } }}>
               <Button
@@ -206,30 +194,26 @@ function AppAppBar() {
                   <MenuItem onClick={() => scrollToSection('faq')}>FAQ</MenuItem>
                   <Divider />
                   <MenuItem>
-                    <Button
-                      color="primary"
-                      variant="contained"
-                      component="a"
-                      href="/material-ui/getting-started/templates/sign-up/"
-                      target="_blank"
-                      sx={{ width: '100%' }}
-                      onClick={handleregistrate}
-                    >
-                      registrate
-                    </Button>
+                    <Link href="/registro" passHref>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        sx={{ width: '100%' }}
+                      >
+                        Registrate
+                      </Button>
+                    </Link>
                   </MenuItem>
                   <MenuItem>
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      component="a"
-                      href="/material-ui/getting-started/templates/sign-in/"
-                      target="_blank"
-                      sx={{ width: '100%' }}
-                      onClick={handleentra}
-                    >
-                      Entrar
-                    </Button>
+                    <Link href="/login" passHref>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        sx={{ width: '100%' }}
+                      >
+                        Entrar
+                      </Button>
+                    </Link>
                   </MenuItem>
                 </Box>
               </Drawer>
