@@ -2,8 +2,8 @@ import OpenAI from "openai";
 import axios from "axios";
 import { Prompt } from "./promps";
 const openai = new OpenAI({
-    apiKey:process.env.APY_KEY_OPENAI,
-    dangerouslyAllowBrowser:true
+  apiKey: process.env.APY_KEY_OPENAI,
+  dangerouslyAllowBrowser: true,
 });
 
 const GPT = {};
@@ -14,11 +14,10 @@ GPT.pdfToBase64ForLink = async (url) => {
   return buffer.toString("base64");
 };
 
-
 GPT.analiceSignupCompany = async (context, financialDoc) => {
-    const input = Prompt.PrompAnaliceSignupCompany + context;
-    //const Docbase64 = GPT.pdfToBase64ForLink(financialDoc);
-    const completion = await openai.chat.completions.create({
+  const input = Prompt.PrompAnaliceSignupCompany + context;
+  //const Docbase64 = GPT.pdfToBase64ForLink(financialDoc);
+  const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
@@ -40,7 +39,7 @@ GPT.analiceSignupCompany = async (context, financialDoc) => {
   return completion.choices[0].message.content;
 };
 
-GPT.analicenewProjectCompany = async (context) => {
+GPT.analicenewProjectCompany = async (context, financialDoc) => {
   const input = Prompt.PrompNewProjectCompany + context;
   //const base64_image = GPT.pdfToBase64ForLink(context.financialDoc);
   const completion = await openai.chat.completions.create({
@@ -52,8 +51,10 @@ GPT.analicenewProjectCompany = async (context) => {
           { type: "text", text: `${input}` },
           {
             type: "image_url",
-            //image_url: { url: `data:image/pdf;base64,{${financialDoc}}` },
-            url: `${context.financialDoc}`,
+            image_url: {
+              //image_url: { url: `data:image/pdf;base64,{${financialDoc}}` },
+              url: `${financialDoc}`,
+            },
           },
         ],
       },

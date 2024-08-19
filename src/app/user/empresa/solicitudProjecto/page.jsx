@@ -21,7 +21,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import { db } from '../../../../../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc } from 'firebase/firestore';
+import GPT from "../../../../../services/gpt/ApiGpt"
 
 export default function LoanRequestForm() {
   const theme = useTheme();
@@ -46,6 +47,7 @@ export default function LoanRequestForm() {
   const [totalAsignado, setTotalAsignado] = useState(0);
   const [errors, setErrors] = useState({});
   const [categorias, setCategorias] = useState([]);
+  const [BanceSheetUrl, setBanceSheetUrl] = useState('');
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -154,12 +156,21 @@ export default function LoanRequestForm() {
     ).join(', ');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    //Se trae balance general del storage
+    const userId = localStorage.getItem('userId');
+    const docRef = doc(db,"empresa",userId);
+    const dataDoc = await getDoc(docRef);
+    const data = dataDoc.data();
+    const BalanceSheet = data.financialDoc;
+    console.log(BalanceSheet);
     if (validateForm()) {
       const presupuestoString = convertirPresupuestoAString(formValues.presupuesto);
       const formData = { ...formValues, presupuesto: presupuestoString };
       console.log('Formulario válido:', formData);
       // Aquí iría la lógica para enviar el formulario
+      const response = await GPT.analicenewProjectCompany(Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(", "),BalanceSheet);
+      console.log(response)
     } else {
       console.log('Formulario no válido:', errors);
     }
