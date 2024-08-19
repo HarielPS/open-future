@@ -40,7 +40,7 @@ export default function LoanRequestForm() {
     proyeccionIngresos: '',
     puntoEquilibrio: '',
     justificacionMonto: '',
-    plazoPropuesto: '',
+    plazoPropuesto: 0,  // Cambiado a numérico
   });
 
   const [totalAsignado, setTotalAsignado] = useState(0);
@@ -63,19 +63,22 @@ export default function LoanRequestForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const parsedValue = name === 'montoPedido' || name === 'plazoPropuesto' ? parseFloat(value) || 0 : value;
+
     setFormValues((prevValues) => ({
       ...prevValues,
-      [name]: value,
+      [name]: parsedValue,
     }));
 
     if (name === 'montoPedido') {
-      validateBudget(value, totalAsignado);
+      validateBudget(parsedValue, totalAsignado);
     }
   };
 
   const handleBudgetChange = (id, field, value) => {
+    const parsedValue = field === 'monto' ? parseFloat(value) || 0 : value;
     const updatedPresupuesto = formValues.presupuesto.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
+      item.id === id ? { ...item, [field]: parsedValue } : item
     );
     setFormValues({
       ...formValues,
@@ -83,7 +86,7 @@ export default function LoanRequestForm() {
     });
 
     if (field === 'monto') {
-      const total = updatedPresupuesto.reduce((sum, item) => sum + parseFloat(item.monto || 0), 0);
+      const total = updatedPresupuesto.reduce((sum, item) => sum + item.monto, 0);
       setTotalAsignado(total);
       validateBudget(formValues.montoPedido, total);
     }
@@ -106,7 +109,7 @@ export default function LoanRequestForm() {
       presupuesto: updatedPresupuesto,
     });
 
-    const total = updatedPresupuesto.reduce((sum, item) => sum + parseFloat(item.monto || 0), 0);
+    const total = updatedPresupuesto.reduce((sum, item) => sum + item.monto, 0);
     setTotalAsignado(total);
     validateBudget(formValues.montoPedido, total);
   };
@@ -114,7 +117,7 @@ export default function LoanRequestForm() {
   const validateBudget = (montoPedido, totalAsignado) => {
     const newErrors = { ...errors };
 
-    if (parseFloat(totalAsignado) !== parseFloat(montoPedido)) {
+    if (totalAsignado !== montoPedido) {
       newErrors.presupuesto = 'La distribución del presupuesto no coincide con el monto solicitado';
     } else {
       delete newErrors.presupuesto;
@@ -137,7 +140,7 @@ export default function LoanRequestForm() {
     if (!formValues.proyeccionIngresos) newErrors.proyeccionIngresos = 'La proyección de ingresos es requerida';
     if (!formValues.puntoEquilibrio) newErrors.puntoEquilibrio = 'El punto de equilibrio es requerido';
     if (!formValues.justificacionMonto) newErrors.justificacionMonto = 'La justificación del monto es requerida';
-    if (!formValues.plazoPropuesto) newErrors.plazoPropuesto = 'El plazo propuesto es requerido';
+    if (formValues.plazoPropuesto <= 0) newErrors.plazoPropuesto = 'El plazo propuesto es requerido';
 
     validateBudget(formValues.montoPedido, totalAsignado);
 
@@ -344,6 +347,7 @@ export default function LoanRequestForm() {
           label="Plazo Propuesto"
           name="plazoPropuesto"
           variant="outlined"
+          type="number"  // Cambiado a tipo numérico
           value={formValues.plazoPropuesto}
           onChange={handleChange}
           error={!!errors.plazoPropuesto}
