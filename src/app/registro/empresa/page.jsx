@@ -13,6 +13,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import Autocomplete from '@mui/material/Autocomplete';
+import GPT from "../../../../services/gpt/ApiGpt"
 
 export default function CompanyForm() {
   const [userId, setUserId] = useState(null);
@@ -43,6 +44,7 @@ export default function CompanyForm() {
     employees: '',
     address: '',
     website: '',
+    empresa_aprobada: false,
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -123,14 +125,30 @@ export default function CompanyForm() {
   const handleFinancialDocChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validar que el archivo sea JPG o PNG
+      const validTypes = ['image/jpeg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        alert("Solo se permiten archivos JPG o PNG.");
+        return;
+      }
+  
+      // Validar que el archivo no supere los 20 MB
+      const maxSize = 20 * 1024 * 1024; // 20 MB en bytes
+      if (file.size > maxSize) {
+        alert("El archivo no debe superar los 20 MB.");
+        return;
+      }
+  
       try {
         if (!userId) {
           throw new Error("No se encontró el ID de usuario en el localStorage");
         }
+  
         const storageRef = ref(storage, `empresa/${userId}/estado_financiero/${file.name}`);
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
         setFinancialDocURL(downloadURL);
+  
         const docRef = doc(db, "empresa", userId);
         await updateDoc(docRef, { financialDoc: downloadURL });
       } catch (error) {
@@ -275,9 +293,12 @@ export default function CompanyForm() {
             const docRef = doc(db, "empresa", userId);
             await updateDoc(docRef, dataToSave);
             console.log("Documento actualizado con éxito");
+            
+            const response = await GPT.analiceSignupCompany(Object.entries(dataToSave).map(([key, value]) => `${key}: ${value}`).join(", "),dataToSave.financialDoc);
+            console.log(response);
 
             // Redireccionar después de guardar exitosamente
-            window.location.href = "/user/empresa/inicio";
+            //window.location.href = "/user/empresa/inicio";
         } catch (error) {
             console.error("Error al actualizar el documento:", error);
         }
