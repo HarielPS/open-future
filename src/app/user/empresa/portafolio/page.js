@@ -15,24 +15,37 @@ export default function Page() {
   const [pieData, setPieData] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [totalInvested, setTotalInvested] = useState(0);
-  const [userId, setuserId] = useState (null)
+  const [userId, setuserId] = useState (null);
 
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
     if (storedId) {
       setuserId(storedId);
     }
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      console.log(userId);
     const fetchData = async () => {
       try {
         const inversorDocRef = doc(db, "empresa", userId);
         const inversorDoc = await getDoc(inversorDocRef);
 
         if (inversorDoc.exists()) {
-          const proyectos = inversorDoc.data().proyectos;
-          const progreso = proyectos.progreso || {};
-          const finalizados = proyectos.finalizados || {};
+          console.log(inversorDoc.data())
+          const proyectos = inversorDoc.data().proyectos || {};
+          console.log(proyectos);
 
-          const totalProjects = Object.keys(progreso).length + Object.keys(finalizados).length;
+
+          // Asegurarse de que progreso y finalizados sean arrays antes de iterarlos
+          const progreso = Array.isArray(proyectos.progreso) ? proyectos.progreso : [];
+          const finalizados = Array.isArray(proyectos.finalizados) ? proyectos.finalizados : [];
+
+          console.log("Progreso:", progreso);
+          console.log("Finalizados:", finalizados);
+
+          const totalProjects = progreso.length + finalizados.length;
           setTotalProjects(totalProjects);
 
           let rowsData = [];
@@ -44,60 +57,53 @@ export default function Page() {
             "Cancelado": 0,
           };
 
-          const processContract = async (contractId) => {
-            const contractDocRef = doc(db, "contrato", contractId.id);
+          const processContract = async (contractDocRef) => {
+            if (!contractDocRef) {
+              console.error("Invalid contractDocRef", contractDocRef);
+              return;
+            }
+            console.log(contractDocRef);
             const contractDoc = await getDoc(contractDocRef);
-
+            const contractData = contractDoc.data();
+            console.log(contractData);
             if (contractDoc.exists()) {
               const contractData = contractDoc.data();
               const projectRef = contractData.id_proyecto;
-              const inversorData = contractData.inversores[userId];
-
-              if (inversorData && inversorData.fecha) {
-                const dueDate = new Date(inversorData.fecha.toDate());
-                dueDate.setDate(dueDate.getDate() + contractData.fecha_pago);
-
-                const projectDoc = await getDoc(projectRef);
+              const projectDoc = await getDoc(projectRef);
+              const projectData = projectDoc.data();
+              console.log(projectData);
+          
                 const projectName = projectDoc.exists() ? projectDoc.data().titulo : "Desconocido";
                 const empresaRef = projectDoc.data().empresa;
                 const empresaDoc = await getDoc(empresaRef);
                 const logo = empresaDoc.exists() ? empresaDoc.data().logo : "";
-
+          
                 statusCounts[contractData.estado] += 1;
-
-                const montoInvertido = typeof inversorData.monto_invertido === 'string' 
-                  ? parseFloat(inversorData.monto_invertido.replace(/[^0-9.-]+/g, "")) 
-                  : inversorData.monto_invertido;
-
-                if (contractData.estado !== "Cancelado") {
-                  totalInvestedAmount += montoInvertido;
-                }
-
-                const earnings = inversorData.ganancia !== undefined ? parseFloat(inversorData.ganancia) : null;
-
+                    
                 rowsData.push({
                   project: projectName,
                   term: parseInt(contractData.duracion_contrato, 10) + " meses",
-                  investment: montoInvertido,
-                  earnings: earnings,
-                  dueDate: dueDate.toLocaleDateString(),
+                  // investment: montoInvertido,
+                  // earnings: earnings,
+                  // dueDate: dueDate.toLocaleDateString(),
                   status: contractData.estado,
                   img: logo,
-                  fecha_contrato: contractData.fecha_contrato.toDate().toLocaleDateString(),
-                  key: contractDocRef.id, // Only save contract ID
+                  // fecha_contrato: contractData.fecha_contrato.toDate().toLocaleDateString(),
+                  key: contractDocRef.id,
                 });
-              } else {
-                console.error("Inversor Data or Fecha is undefined for contract:", contractDocRef.id);
-              }
+
+            } else {
+              console.error("Contract does not exist for ID:", contractDocRef.id);
             }
           };
 
-          for (const contractId of Object.values(progreso)) {
-            await processContract(contractId);
+          for (const contractDocRef of progreso) {
+            console.log("entro al for");
+            await processContract(contractDocRef);
           }
-
-          for (const contractId of Object.values(finalizados)) {
-            await processContract(contractId);
+          
+          for (const contractDocRef of finalizados) {
+            await processContract(contractDocRef);
           }
 
           setRows(rowsData);
@@ -118,6 +124,7 @@ export default function Page() {
       }
     };
     fetchData();
+  }
   }, [userId]);
 
   return (

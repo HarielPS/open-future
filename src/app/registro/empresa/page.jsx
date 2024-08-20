@@ -131,7 +131,7 @@ export default function CompanyForm() {
         const downloadURL = await getDownloadURL(storageRef);
         setProfileImg(downloadURL);
         const docRef = doc(db, "empresa", userId);
-        await updateDoc(docRef, { img: downloadURL });
+        await updateDoc(docRef, { logo: downloadURL });
       } catch (error) {
         console.error("Error subiendo la imagen de perfil: ", error);
       }

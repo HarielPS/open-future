@@ -84,80 +84,62 @@ export default function Page() {
   
   const handleEvents = async (id) => {
     try {
-        const investorDoc = await getDoc(doc(db, "empresa", id));
-        if (investorDoc.exists()) {
-            const investorData = investorDoc.data();
-            const progress = investorData.proyectos?.progreso || {};
-            const finalizados = investorData.proyectos?.finalizados || {};
+        const empresaDoc = await getDoc(doc(db, "empresa", id));
+        if (empresaDoc.exists()) {
+            const empresaData = empresaDoc.data();
+            const progress = empresaData.proyectos?.progreso || {};
+            const finalizados = empresaData.proyectos?.finalizados || {};
         
             let newEvents = [];
         
-            const agregarEventos = async (proyectoRef) => {
-                const contratoDoc = await getDoc(proyectoRef);
+            const agregarEventos = async (contratoRef) => {
+                const contratoDoc = await getDoc(contratoRef);
                 if (contratoDoc.exists()) {
                     const contratoData = contratoDoc.data();
                     const estadoContrato = contratoData.estado;
 
                     if (estadoContrato === 'Activo' || estadoContrato === 'Finalizado') {
-                        const inversorMap = contratoData.inversores || {};
-                        const inversorData = inversorMap[id];
+                        const idProyectoRef = contratoData.id_proyecto;
+                        const idProyectoDoc = await getDoc(idProyectoRef);
+                        if (idProyectoDoc.exists()) {
+                            const proyectoData = idProyectoDoc.data();
+                            const empresaRef = proyectoData.empresa;
 
-                        if (inversorData) {
-                            const idProyectoRef = contratoData.id_proyecto;
-                            const idProyectoDoc = await getDoc(idProyectoRef);
-                            if (idProyectoDoc.exists()) {
-                                const proyectoData = idProyectoDoc.data();
-                                const idEmpresaRef = proyectoData.empresa;
+                            if (empresaRef) {
+                                let fechaContrato = contratoData.fecha_contrato.toDate();
+                                const duracion = parseInt(contratoData.duracion_contrato, 10);
+                                const fechaPago = parseInt(contratoData.fecha_pago, 10);
 
-                                if (idEmpresaRef) {
-                                    const idEmpresaDoc = await getDoc(idEmpresaRef);
-                                    if (idEmpresaDoc.exists()) {
-                                        const empresaData = idEmpresaDoc.data();
-                                        let fechaContrato = contratoData.fecha_contrato.toDate();
-                                        const duracion = parseInt(contratoData.duracion_contrato, 10);
-                                        const fechaPago = parseInt(contratoData.fecha_pago, 10);
+                                for (let mes = 0; mes < duracion; mes++) {
+                                    const fecha = new Date(fechaContrato);
+                                    fecha.setMonth(fecha.getMonth() + mes);
+                                    fecha.setDate(fechaContrato.getDate() + fechaPago - 1);
 
-                                        for (let mes = 0; mes < duracion; mes++) {
-                                            const fecha = new Date(fechaContrato);
-                                            
-                                            // Añadir los meses correspondientes
-                                            fecha.setMonth(fecha.getMonth() + mes);
-
-                                            // Ajustar la fecha sumando los días especificados
-                                            fecha.setDate(fechaContrato.getDate() + fechaPago - 1); // Restar 1 día para corregir el conteo
-
-                                            // Comprobar si la nueva fecha se pasa del último día del mes
-                                            if (fecha.getDate() > new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate()) {
-                                                const extraDays = fecha.getDate() - new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
-                                                fecha.setMonth(fecha.getMonth() + 1);
-                                                fecha.setDate(extraDays);
-                                            }
-
-                                            newEvents.push({
-                                                date: fecha.toISOString().split('T')[0],
-                                                name: proyectoData.titulo || 'Proyecto sin nombre',
-                                                empresa: empresaData.nombre || 'Empresa desconocida',
-                                                amount: (inversorData.monto_invertido / duracion) + (inversorData.ganancia || 0),
-                                            });
-
-                                            // Actualizar fechaContrato para la siguiente iteración
-                                            fechaContrato = fecha;
-                                        }
-                                    } else {
-                                        console.log("El documento de empresa no existe");
+                                    if (fecha.getDate() > new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate()) {
+                                        const extraDays = fecha.getDate() - new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+                                        fecha.setMonth(fecha.getMonth() + 1);
+                                        fecha.setDate(extraDays);
                                     }
-                                } else {
-                                    console.log("El campo empresa no tiene una referencia válida");
+
+                                    newEvents.push({
+                                        date: fecha.toISOString().split('T')[0],
+                                        name: proyectoData.titulo || 'Proyecto sin nombre',
+                                        empresa: empresaData.nombre || 'Empresa desconocida',
+                                        amount: (contratoData.monto_pedido / duracion) + (contratoData.rendimiento || 0),
+                                    });
+
+                                    fechaContrato = fecha;
                                 }
                             } else {
-                                console.log("El documento de proyecto no existe");
+                                console.log("El campo empresa no tiene una referencia válida");
                             }
+                        } else {
+                            console.log("El documento de proyecto no existe");
                         }
                     }
                 }
             };
         
-            // Agregar eventos de proyectos en progreso y finalizados
             for (const key in progress) {
                 await agregarEventos(progress[key]);
             }
@@ -167,12 +149,11 @@ export default function Page() {
             }
         
             setevents(newEvents);
-            console.log(newEvents);
         }
     } catch (error) {
         console.error("Error obteniendo datos del empresa:", error);
     }
-};
+  };
 
 
 

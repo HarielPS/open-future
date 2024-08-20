@@ -47,7 +47,7 @@ export default function SideBar({ visible, handleVisible }) {
         setUserInfo(prevState => ({
           ...prevState,
           name: fullName,
-          image: userData.img,
+          image: userData.logo,
         }));
       } else {
         console.log('No such document!');

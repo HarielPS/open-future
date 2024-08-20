@@ -8,6 +8,8 @@ import {
   Autocomplete,
   Chip,
   useTheme,
+  Modal,
+  Grid
 } from '@mui/material';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
@@ -21,8 +23,23 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import { db } from '../../../../../firebase';
-import { collection, doc, getDocs, getDoc, setDoc,updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
-import GPT from "../../../../../services/gpt/ApiGpt"
+import { collection, doc, getDocs, getDoc, setDoc,updateDoc, arrayUnion, serverTimestamp,Timestamp } from 'firebase/firestore';
+import GPT from "../../../../../services/gpt/ApiGpt";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CircularProgress from '@mui/material/CircularProgress';
+
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 600,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: '8px',
+};
 
 export default function LoanRequestForm() {
   const theme = useTheme();
@@ -48,6 +65,9 @@ export default function LoanRequestForm() {
   const [errors, setErrors] = useState({});
   const [categorias, setCategorias] = useState([]);
   const [BanceSheetUrl, setBanceSheetUrl] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+  const [modalStatus, setModalStatus] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -157,86 +177,142 @@ export default function LoanRequestForm() {
   };
 
 
-const handleSaveToDatabase = async (parsedResponse, formData, userId) => {
-  try {
-    // Crear documento en la colección "proyecto"
-    const proyectoRef = doc(collection(db, "proyecto"));
-    const proyectoData = {
-      categoria: formData.categorias.map(cat => doc(db, "categoria", cat.id)),
-      descripcion: formData.descripcion,
-      empresa: doc(db, "empresa", userId),
-      estado_proyecto: "Fondeo",
-      fecha_caducidad: serverTimestamp() + 10 * 24 * 60 * 60 * 1000, // Fecha actual + 10 días
-      fecha_solicitud: serverTimestamp(),
-      monto_pedido: formData.montoPedido,
-      monto_recaudado: 0,
-      rendimiento: parsedResponse.comision_aprobada,
-      titulo: formData.titulo,
-      ubicacion: formData.ubicacion,
-      ...formData  // Guardar otros campos del formulario
-    };
-    await setDoc(proyectoRef, proyectoData);
-
-    // Crear documento en la colección "contrato"
-    const contratoRef = doc(collection(db, "contrato"));
-    const contratoData = {
-      estado: "Fondeo",
-      fecha_contrato: null, // Dejar en blanco
-      fecha_pago: 30,
-      id_contrato: "1234",
-      id_proyecto: proyectoRef,
-      monto_pedido: formData.montoPedido,
-      rendimiento: parsedResponse.comision_aprobada,
-      wallet_empresa: formData.wallet,
-      garantia: parsedResponse.garantia_aprobada
-    };
-    await setDoc(contratoRef, contratoData);
-
-    // Actualizar el documento en la colección "empresa"
-    const empresaRef = doc(db, "empresa", userId);
-    await updateDoc(empresaRef, {
-      "proyectos.progreso": arrayUnion(contratoRef)
-    });
-
-    console.log("Datos guardados exitosamente en la base de datos.");
-  } catch (error) {
-    console.error("Error al guardar los datos en la base de datos:", error);
-  }
-};
+  const handleSaveToDatabase = async (parsedResponse, formData, userId) => {
+    try {
+      // Crear una fecha actual y sumarle 10 días
+      const currentDate = new Date();
+      const expirationDate = new Date(currentDate);
+      expirationDate.setDate(expirationDate.getDate() + 10);
+  
+      // Convertirla en Timestamp de Firestore
+      const expirationTimestamp = Timestamp.fromDate(expirationDate);
+  
+      // Extraer "categorias" para que no sea propagado
+      const { categorias, montoPedido, ...restFormData } = formData;
+  
+      // Crear documento en la colección "proyecto"
+      const proyectoRef = doc(collection(db, "proyecto"));
+      const proyectoData = {
+        // ...restFormData, // Aquí solo los demás campos de formData sin "categorias"
+        categoria: categorias.map(cat => doc(db, "categoria", cat.id)), // Crear el campo "categoria" con referencias
+        descripcion:formData.descripcion,
+        titulo:formData.titulo,
+        objetivos: formData.objetivos,
+        impacto: formData.impacto,
+        puntoEquilibrio: formData.puntoEquilibrio,
+        empresa: doc(db, "empresa", userId),
+        estado_proyecto: "Fondeo",
+        fecha_caducidad: expirationTimestamp,
+        fecha_solicitud: Timestamp.now(),
+        monto_pedido: formData.montoPedido,
+        monto_recaudado: 0,
+        ubicacion:formValues.ubicacion,
+        rendimiento: parsedResponse.porcentaje_comision_aprobado,
+        presupuesto: formValues.presupuesto.reduce((acc, curr, index) => {
+          acc[`presupuesto_${index + 1}`] = {
+            titulo: curr.titulo,
+            monto: curr.monto,
+            descripcion: curr.descripcion
+          };
+          return acc;
+        }, {})
+      };
+  
+      await setDoc(proyectoRef, proyectoData);
+  
+      // Crear documento en la colección "contrato"
+      const contratoRef = doc(collection(db, "contrato"));
+      const contratoData = {
+        estado: "Fondeo",
+        duracion_contrato: formData.plazoPropuesto,
+        // fecha_contrato: null, // Dejar en blanco
+        fecha_pago: 30,
+        id_contrato: "1234",
+        id_proyecto: proyectoRef,
+        monto_pedido: formData.montoPedido,
+        rendimiento: parsedResponse.porcentaje_comision_aprobado,
+        wallet_empresa: formData.wallet,
+        garantia: parsedResponse.garantia_aprobada
+      };
+      await setDoc(contratoRef, contratoData);
+  
+      // Actualizar el documento en la colección "empresa"
+      const empresaRef = doc(db, "empresa", userId);
+      await updateDoc(empresaRef, {
+        "proyectos.progreso": arrayUnion(contratoRef)
+      });
+  
+      console.log("Datos guardados exitosamente en la base de datos.");
+    } catch (error) {
+      console.error("Error al guardar los datos en la base de datos:", error);
+    }
+  };
+  
 
   const handleSubmit = async () => {
-    //Se trae balance general del storage
+    // Se trae balance general del storage
     const userId = localStorage.getItem('userId');
-    const docRef = doc(db,"empresa",userId);
+    const docRef = doc(db, "empresa", userId);
     const dataDoc = await getDoc(docRef);
     const data = dataDoc.data();
     const BalanceSheet = data.financialDoc;
     console.log(BalanceSheet);
+  
     if (validateForm()) {
+      setIsProcessing(true); // Mostrar modal de "Procesando"
       const presupuestoString = convertirPresupuestoAString(formValues.presupuesto);
       const formData = { ...formValues, presupuesto: presupuestoString };
       console.log('Formulario válido:', formData);
-      console.log(BalanceSheet);
+  
+      let parsedResponse; // Declara parsedResponse fuera del bloque do
+  
       // Aquí iría la lógica para enviar el formulario
-      const response = await GPT.analicenewProjectCompany(Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(", "),BalanceSheet);
-      console.log(response)
-      console.log("respuesta")
-      let parsedResponse;
-      try {
-        parsedResponse = JSON.parse(response);
-      } catch (e) {
-        console.error("Error al parsear la respuesta de OpenAI:", e);
-        console.log("Respuesta original:", response);
-        return;
+      do {
+        const response = await GPT.analicenewProjectCompany(Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(", "), BalanceSheet);
+        console.log(response);
+        console.log("respuesta");
+  
+        try {
+          parsedResponse = JSON.parse(response); // parsedResponse se asigna aquí
+        } catch (e) {
+          console.error("Error al parsear la respuesta de OpenAI:", e);
+          console.log("Respuesta original:", response);
+          setIsProcessing(false); // Ocultar modal de "Procesando"
+          return;
+        }
+  
+        // console.log(parsedResponse.porcentaje_comision_aprobado);
+      } while (parsedResponse.porcentaje_comision_aprobado > 100);
+  
+      setIsProcessing(false); // Ocultar modal de "Procesando"
+      setModalStatus(parsedResponse.credito_aprobado); // Mostrar el resultado
+  
+      if(parsedResponse.credito_aprobado){
+        await handleSaveToDatabase(parsedResponse, formData, userId);
       }
-      // aqui llama un handle con la logica de guardar en la base de datos
-      await handleSaveToDatabase(parsedResponse, formData, userId);
+      setOpenModal(true);
+        
+      // Aquí llama un handle con la lógica de guardar en la base de datos
 
+  
     } else {
       console.log('Formulario no válido:', errors);
     }
   };
+  
+  const handleOkClick = async () => {
+    setOpenModal(false);
+    if (modalStatus === true) {
+      window.location.href = '/user/empresa/inicio';
+    } else if (modalStatus === false) {
+        window.location.href = '/user/empresa/inicio';
+    }
+  };
 
+  const handleCloseModal = () => {
+    // No cerrar modal si no es con OK
+  };
+  
   const handleCategoriaChange = (event, value) => {
     setFormValues((prevValues) => ({
       ...prevValues,
@@ -538,6 +614,74 @@ const handleSaveToDatabase = async (parsedResponse, formData, userId) => {
           Enviar Solicitud
         </Button>
       </Box>
+
+      {/* modal */}
+      <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="status-modal-title"
+          aria-describedby="status-modal-description"
+        >
+          <Box sx={modalStyle} onClick={(e) => e.stopPropagation()}>
+            {modalStatus === true ? (
+              <Grid container spacing={2} alignItems="center">
+                <Grid item>
+                  <CheckCircleIcon style={{ fontSize: 80, color: 'green' }} />
+                </Grid>
+                <Grid item xs>
+                  <Typography id="status-modal-title" variant="h5" component="h2">
+                    TU SOLICITUD HA SIDO APROBADA
+                  </Typography>
+                  <Typography id="status-modal-description" sx={{ mt: 2 }}>
+                    Tu solicitud se presentara en la plataforma para los inversores, y podras ver su estado en los apartados correspondientes.
+                  </Typography>
+                </Grid>
+              </Grid>
+            ) : (
+              <Grid container spacing={2} alignItems="center">
+                <Grid item>
+                  <HighlightOffIcon style={{ fontSize: 80, color: 'red' }} />
+                </Grid>
+                <Grid item xs>
+                  <Typography id="status-modal-title" variant="h5" component="h2">
+                    LO LAMENTAMOS
+                  </Typography>
+                  <Typography id="status-modal-description" sx={{ mt: 2 }}>
+                    Tu solicitud no ah sido aprovada, te animamos a segir adelante y plantearla mejor de neuvo para presentarla
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+            <Button onClick={handleOkClick} variant="contained" color={modalStatus === true ? 'primary' : 'secondary'} sx={{ mt: 3, display: 'block', ml: 'auto' }}>
+              OK
+            </Button>
+          </Box>
+        </Modal>
+
+        <Modal
+          open={isProcessing}
+          onClose={() => {}}
+          aria-labelledby="processing-modal-title"
+          aria-describedby="processing-modal-description"
+        >
+          <Box sx={modalStyle} onClick={(e) => e.stopPropagation()}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item>
+                <CircularProgress />
+              </Grid>
+              <Grid item xs>
+                <Typography id="processing-modal-title" variant="h5" component="h2">
+                  Procesando la solicitud
+                </Typography>
+                <Typography id="processing-modal-description" sx={{ mt: 2 }}>
+                  Por favor, espera mientras procesamos tu solicitud. Esto puede tomar algunos momentos.
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        </Modal>
+
+
     </Box>
   );
 }
