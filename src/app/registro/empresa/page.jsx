@@ -64,6 +64,7 @@ export default function CompanyForm() {
   const [formErrors, setFormErrors] = useState({});
   const [openModal, setOpenModal] = useState(false);
   const [modalStatus, setModalStatus] = useState(null);
+  const [detallesRechazo, setDetallesRechazo] = useState();
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -326,13 +327,14 @@ export default function CompanyForm() {
               console.log("Respuesta original:", response);
               return;
             }
-
+            
             if (parsedResponse && parsedResponse.empresa_aprobada !== undefined) {
               const isApproved = parsedResponse.empresa_aprobada;
               console.log("Empresa aprobada:", isApproved);
               setModalStatus(isApproved);
       
               if (!isApproved) {
+                setDetallesRechazo(parsedResponse.detalles_informacion);
                 console.log("Empresa no aprobada, eliminando documentos...");
                 await deleteFolderContents(userId);
                 await deleteDoc(docRef);
@@ -861,6 +863,9 @@ const handleCloseModal = () => {
                   </Typography>
                   <Typography id="status-modal-description" sx={{ mt: 2 }}>
                     Tu empresa lastimosamente no tiene las características para presentar sus solicitudes para financiamiento, sin embargo, lo invitamos a seguir impulsando su empresa.
+                  </Typography>
+                  <Typography>
+                    {detallesRechazo}
                   </Typography>
                 </Grid>
               </Grid>
