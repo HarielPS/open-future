@@ -3,17 +3,31 @@ import React, { useState, useEffect } from "react";
 import {
   Box, Grid, Paper, Typography, Avatar, Button, TextField, InputAdornment, FormControl,
   InputLabel, Select, MenuItem, FormControlLabel, Checkbox, Chip, Fab,
-  Tooltip
+  Tooltip, Modal
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { db, storage } from '../../../../firebase';
-import { doc, updateDoc, getDocs, collection, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc, getDocs, collection, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL,deleteObject,listAll } from 'firebase/storage';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import Autocomplete from '@mui/material/Autocomplete';
-import GPT from "../../../../services/gpt/ApiGpt"
+import GPT from "../../../../services/gpt/ApiGpt";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 600,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: '8px',
+};
 
 export default function CompanyForm() {
   const [userId, setUserId] = useState(null);
@@ -46,8 +60,10 @@ export default function CompanyForm() {
     website: '',
     empresa_aprobada: false,
   });
-
+  const [isHttpsAdded, setIsHttpsAdded] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+  const [modalStatus, setModalStatus] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -219,9 +235,9 @@ export default function CompanyForm() {
       errors.address = 'La dirección es requerida';
     }
   
-    if (formValues.website && !/^https?:\/\/.+/.test(formValues.website)) {
-      errors.website = 'La página web debe ser un link válido';
-    }
+    // if (formValues.website && !/^https?:\/\/.+/.test(formValues.website)) {
+    //   errors.website = 'La página web debe ser un link válido';
+    // }
   
     if (!isChecked) {
       errors.checkbox = 'Debes aceptar los términos y condiciones';
@@ -271,6 +287,7 @@ export default function CompanyForm() {
   };
 
   const handleSubmit = async () => {
+
     if (validateForm()) {
         try {
             // Convertir las referencias de los sectores seleccionados
@@ -286,7 +303,7 @@ export default function CompanyForm() {
                 companyType,
                 industrySectors, // Guardar las referencias en el formato adecuado
                 password: newPassword,
-                website: formValues.website || '', // Si no hay valor, se guarda como ''
+                website: "https://"+formValues.website || '', // Si no hay valor, se guarda como ''
                 financialDoc: financialDocURL, // Guardar la URL del documento financiero
             };
 
@@ -295,16 +312,74 @@ export default function CompanyForm() {
             const docRef = doc(db, "empresa", userId);
             await updateDoc(docRef, dataToSave);
             console.log("Documento actualizado con éxito");
+            console.log(dataToSave);
             
             const response = await GPT.analiceSignupCompany(Object.entries(dataToSave).map(([key, value]) => `${key}: ${value}`).join(", "),dataToSave.financialDoc);
             console.log(response);
 
-            // Redireccionar después de guardar exitosamente
-            //window.location.href = "/user/empresa/inicio";
+            // Verificar si la respuesta está en formato JSON y convertirla si es necesario
+            let parsedResponse;
+            try {
+              parsedResponse = JSON.parse(response);
+            } catch (e) {
+              console.error("Error al parsear la respuesta de OpenAI:", e);
+              console.log("Respuesta original:", response);
+              return;
+            }
+
+            if (parsedResponse && parsedResponse.empresa_aprobada !== undefined) {
+              const isApproved = parsedResponse.empresa_aprobada;
+              console.log("Empresa aprobada:", isApproved);
+              setModalStatus(isApproved);
+      
+              if (!isApproved) {
+                console.log("Empresa no aprobada, eliminando documentos...");
+                await deleteFolderContents(userId);
+                await deleteDoc(docRef);
+              }
+            } else {
+              console.log("response o empresa_aprobada no está definido.");
+            }
+      
+            setOpenModal(true);
+
         } catch (error) {
             console.error("Error al actualizar el documento:", error);
         }
     }
+};
+
+const deleteFolderContents = async (userId) => {
+  try {
+      const folderRef = ref(storage, `empresa/${userId}`);
+      
+      // Listar todos los archivos y carpetas dentro de la "carpeta" del usuario
+      const listResult = await listAll(folderRef);
+      
+      // Eliminar todos los archivos dentro de estado_financiero y profile_image
+      const deletePromises = listResult.items.map(item => deleteObject(item));
+      
+      // Esperar hasta que todos los archivos sean eliminados
+      await Promise.all(deletePromises);
+      
+      console.log(`Todos los archivos en empresa/${userId} han sido eliminados.`);
+      
+  } catch (error) {
+      console.error("Error al eliminar los archivos:", error.message);
+  }
+};
+
+const handleOkClick = async () => {
+  setOpenModal(false);
+  if (modalStatus === true) {
+    window.location.href = '/user/empresa/inicio';
+  } else if (modalStatus === false) {
+      window.location.href = '/';
+  }
+};
+
+const handleCloseModal = () => {
+  // No cerrar modal si no es con OK
 };
 
   const handleAddSectorClick = () => {
@@ -752,6 +827,50 @@ export default function CompanyForm() {
             </Paper>
           </Grid>
         </Grid>
+
+        {/* modal */}
+        <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="status-modal-title"
+          aria-describedby="status-modal-description"
+        >
+          <Box sx={modalStyle} onClick={(e) => e.stopPropagation()}>
+            {modalStatus === true ? (
+              <Grid container spacing={2} alignItems="center">
+                <Grid item>
+                  <CheckCircleIcon style={{ fontSize: 80, color: 'green' }} />
+                </Grid>
+                <Grid item xs>
+                  <Typography id="status-modal-title" variant="h5" component="h2">
+                    HAS SIDO APROBADO
+                  </Typography>
+                  <Typography id="status-modal-description" sx={{ mt: 2 }}>
+                    Tu empresa ha sido aprobada, ahora estarás dada de alta en la aplicación y podrás iniciar sesión con tu wallet, y acceder a las distintas opciones del sitio.
+                  </Typography>
+                </Grid>
+              </Grid>
+            ) : (
+              <Grid container spacing={2} alignItems="center">
+                <Grid item>
+                  <HighlightOffIcon style={{ fontSize: 80, color: 'red' }} />
+                </Grid>
+                <Grid item xs>
+                  <Typography id="status-modal-title" variant="h5" component="h2">
+                    LO LAMENTAMOS
+                  </Typography>
+                  <Typography id="status-modal-description" sx={{ mt: 2 }}>
+                    Tu empresa lastimosamente no tiene las características para presentar sus solicitudes para financiamiento, sin embargo, lo invitamos a seguir impulsando su empresa.
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+            <Button onClick={handleOkClick} variant="contained" color={modalStatus === true ? 'primary' : 'secondary'} sx={{ mt: 3, display: 'block', ml: 'auto' }}>
+              OK
+            </Button>
+          </Box>
+        </Modal>
+
       </Box>
     </LocalizationProvider>
   );

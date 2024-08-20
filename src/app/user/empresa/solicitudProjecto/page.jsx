@@ -21,7 +21,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import { db } from '../../../../../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, setDoc,updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import GPT from "../../../../../services/gpt/ApiGpt"
 
 export default function LoanRequestForm() {
   const theme = useTheme();
@@ -46,6 +47,7 @@ export default function LoanRequestForm() {
   const [totalAsignado, setTotalAsignado] = useState(0);
   const [errors, setErrors] = useState({});
   const [categorias, setCategorias] = useState([]);
+  const [BanceSheetUrl, setBanceSheetUrl] = useState('');
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -154,12 +156,82 @@ export default function LoanRequestForm() {
     ).join(', ');
   };
 
-  const handleSubmit = () => {
+
+const handleSaveToDatabase = async (parsedResponse, formData, userId) => {
+  try {
+    // Crear documento en la colección "proyecto"
+    const proyectoRef = doc(collection(db, "proyecto"));
+    const proyectoData = {
+      categoria: formData.categorias.map(cat => doc(db, "categoria", cat.id)),
+      descripcion: formData.descripcion,
+      empresa: doc(db, "empresa", userId),
+      estado_proyecto: "Fondeo",
+      fecha_caducidad: serverTimestamp() + 10 * 24 * 60 * 60 * 1000, // Fecha actual + 10 días
+      fecha_solicitud: serverTimestamp(),
+      monto_pedido: formData.montoPedido,
+      monto_recaudado: 0,
+      rendimiento: parsedResponse.comision_aprobada,
+      titulo: formData.titulo,
+      ubicacion: formData.ubicacion,
+      ...formData  // Guardar otros campos del formulario
+    };
+    await setDoc(proyectoRef, proyectoData);
+
+    // Crear documento en la colección "contrato"
+    const contratoRef = doc(collection(db, "contrato"));
+    const contratoData = {
+      estado: "Fondeo",
+      fecha_contrato: null, // Dejar en blanco
+      fecha_pago: 30,
+      id_contrato: "1234",
+      id_proyecto: proyectoRef,
+      monto_pedido: formData.montoPedido,
+      rendimiento: parsedResponse.comision_aprobada,
+      wallet_empresa: formData.wallet,
+      garantia: parsedResponse.garantia_aprobada
+    };
+    await setDoc(contratoRef, contratoData);
+
+    // Actualizar el documento en la colección "empresa"
+    const empresaRef = doc(db, "empresa", userId);
+    await updateDoc(empresaRef, {
+      "proyectos.progreso": arrayUnion(contratoRef)
+    });
+
+    console.log("Datos guardados exitosamente en la base de datos.");
+  } catch (error) {
+    console.error("Error al guardar los datos en la base de datos:", error);
+  }
+};
+
+  const handleSubmit = async () => {
+    //Se trae balance general del storage
+    const userId = localStorage.getItem('userId');
+    const docRef = doc(db,"empresa",userId);
+    const dataDoc = await getDoc(docRef);
+    const data = dataDoc.data();
+    const BalanceSheet = data.financialDoc;
+    console.log(BalanceSheet);
     if (validateForm()) {
       const presupuestoString = convertirPresupuestoAString(formValues.presupuesto);
       const formData = { ...formValues, presupuesto: presupuestoString };
       console.log('Formulario válido:', formData);
+      console.log(BalanceSheet);
       // Aquí iría la lógica para enviar el formulario
+      const response = await GPT.analicenewProjectCompany(Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(", "),BalanceSheet);
+      console.log(response)
+      console.log("respuesta")
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(response);
+      } catch (e) {
+        console.error("Error al parsear la respuesta de OpenAI:", e);
+        console.log("Respuesta original:", response);
+        return;
+      }
+      // aqui llama un handle con la logica de guardar en la base de datos
+      await handleSaveToDatabase(parsedResponse, formData, userId);
+
     } else {
       console.log('Formulario no válido:', errors);
     }
@@ -344,7 +416,7 @@ export default function LoanRequestForm() {
 
         <TextField
           fullWidth
-          label="Plazo Propuesto"
+          label="Plazo Propuesto (meses)"
           name="plazoPropuesto"
           variant="outlined"
           type="number"  // Cambiado a tipo numérico
