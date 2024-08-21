@@ -20,10 +20,13 @@ export default function Page() {
   useEffect(() => {
     // Verifica si el código se está ejecutando en el cliente
     if (typeof window !== 'undefined') {
-      const storedId = localStorage.getItem('userId');
-      if (storedId) {
-        setuserId(storedId);
+      if (typeof localStorage !== 'undefined') {
+        const storedId = localStorage.getItem('userId');
+        if (storedId) {
+          setuserId(storedId);
+        }
       }
+      
     }
   }, []);
 
