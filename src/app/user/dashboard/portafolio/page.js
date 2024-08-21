@@ -15,105 +15,118 @@ export default function Page() {
   const [pieData, setPieData] = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [totalInvested, setTotalInvested] = useState(0);
-  const userId = localStorage.getItem('userId');
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const inversorDocRef = doc(db, "inversor", userId);
-        const inversorDoc = await getDoc(inversorDocRef);
-
-        if (inversorDoc.exists()) {
-          const proyectos = inversorDoc.data().proyectos;
-          const progreso = proyectos.progreso || {};
-          const finalizados = proyectos.finalizados || {};
-
-          const totalProjects = Object.keys(progreso).length + Object.keys(finalizados).length;
-          setTotalProjects(totalProjects);
-
-          let rowsData = [];
-          let totalInvestedAmount = 0;
-          let statusCounts = {
-            "Finalizado": 0,
-            "Activo": 0,
-            "Fondeo": 0,
-            "Cancelado": 0,
-          };
-
-          const processContract = async (contractId) => {
-            const contractDocRef = doc(db, "contrato", contractId.id);
-            const contractDoc = await getDoc(contractDocRef);
-
-            if (contractDoc.exists()) {
-              const contractData = contractDoc.data();
-              const projectRef = contractData.id_proyecto;
-              const inversorData = contractData.inversores[userId];
-
-              if (inversorData && inversorData.fecha) {
-                const dueDate = new Date(inversorData.fecha.toDate());
-                dueDate.setDate(dueDate.getDate() + contractData.fecha_pago);
-
-                const projectDoc = await getDoc(projectRef);
-                const projectName = projectDoc.exists() ? projectDoc.data().titulo : "Desconocido";
-                const empresaRef = projectDoc.data().empresa;
-                const empresaDoc = await getDoc(empresaRef);
-                const logo = empresaDoc.exists() ? empresaDoc.data().logo : "";
-
-                statusCounts[contractData.estado] += 1;
-
-                const montoInvertido = typeof inversorData.monto_invertido === 'string' 
-                  ? parseFloat(inversorData.monto_invertido.replace(/[^0-9.-]+/g, "")) 
-                  : inversorData.monto_invertido;
-
-                if (contractData.estado !== "Cancelado") {
-                  totalInvestedAmount += montoInvertido;
-                }
-
-                const earnings = inversorData.ganancia !== undefined ? parseFloat(inversorData.ganancia) : null;
-
-                rowsData.push({
-                  project: projectName,
-                  term: parseInt(contractData.duracion_contrato, 10) + " meses",
-                  investment: montoInvertido,
-                  earnings: earnings,
-                  dueDate: dueDate.toLocaleDateString(),
-                  status: contractData.estado,
-                  img: logo,
-                  fecha_contrato: contractData.fecha_contrato.toDate().toLocaleDateString(),
-                  key: contractDocRef.id, // Only save contract ID
-                });
-              } else {
-                console.error("Inversor Data or Fecha is undefined for contract:", contractDocRef.id);
-              }
-            }
-          };
-
-          for (const contractId of Object.values(progreso)) {
-            await processContract(contractId);
-          }
-
-          for (const contractId of Object.values(finalizados)) {
-            await processContract(contractId);
-          }
-
-          setRows(rowsData);
-          setTotalInvested(totalInvestedAmount);
-
-          setPieData([
-            { id: "Finalizado", label: "Finalizado", value: statusCounts['Finalizado'], color: "hsl(124, 70%, 50%)" },
-            { id: "Activo", label: "Activo", value: statusCounts['Activo'], color: "hsl(90, 10%, 10%)" },
-            { id: "Fondeo", label: "Fondeo", value: statusCounts['Fondeo'], color: "hsl(100, 70%, 50%)" },
-            { id: "Cancelado", label: "Cancelado", value: statusCounts['Cancelado'], color: "hsl(0, 70%, 50%)" },
-          ]);
-
-        } else {
-          console.log("No such document!");
-        }
-      } catch (error) {
-        console.error("Error fetching document: ", error);
+    // Verifica si el código se está ejecutando en el cliente
+    if (typeof window !== 'undefined') {
+      const storedId = localStorage.getItem('userId');
+      if (storedId) {
+        setUserId(storedId);
       }
-    };
-    fetchData();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      console.log(userId);
+      const fetchData = async () => {
+        try {
+          const inversorDocRef = doc(db, "inversor", userId);
+          const inversorDoc = await getDoc(inversorDocRef);
+
+          if (inversorDoc.exists()) {
+            const proyectos = inversorDoc.data().proyectos;
+            const progreso = proyectos.progreso || {};
+            const finalizados = proyectos.finalizados || {};
+
+            const totalProjects = Object.keys(progreso).length + Object.keys(finalizados).length;
+            setTotalProjects(totalProjects);
+
+            let rowsData = [];
+            let totalInvestedAmount = 0;
+            let statusCounts = {
+              "Finalizado": 0,
+              "Activo": 0,
+              "Fondeo": 0,
+              "Cancelado": 0,
+            };
+
+            const processContract = async (contractId) => {
+              const contractDocRef = doc(db, "contrato", contractId.id);
+              const contractDoc = await getDoc(contractDocRef);
+
+              if (contractDoc.exists()) {
+                const contractData = contractDoc.data();
+                const projectRef = contractData.id_proyecto;
+                const inversorData = contractData.inversores[userId];
+
+                if (inversorData && inversorData.fecha) {
+                  const dueDate = new Date(inversorData.fecha.toDate());
+                  dueDate.setDate(dueDate.getDate() + contractData.fecha_pago);
+
+                  const projectDoc = await getDoc(projectRef);
+                  const projectName = projectDoc.exists() ? projectDoc.data().titulo : "Desconocido";
+                  const empresaRef = projectDoc.data().empresa;
+                  const empresaDoc = await getDoc(empresaRef);
+                  const logo = empresaDoc.exists() ? empresaDoc.data().logo : "";
+
+                  statusCounts[contractData.estado] += 1;
+
+                  const montoInvertido = typeof inversorData.monto_invertido === 'string' 
+                    ? parseFloat(inversorData.monto_invertido.replace(/[^0-9.-]+/g, "")) 
+                    : inversorData.monto_invertido;
+
+                  if (contractData.estado !== "Cancelado") {
+                    totalInvestedAmount += montoInvertido;
+                  }
+
+                  const earnings = inversorData.ganancia !== undefined ? parseFloat(inversorData.ganancia) : null;
+
+                  rowsData.push({
+                    project: projectName,
+                    term: parseInt(contractData.duracion_contrato, 10) + " meses",
+                    investment: montoInvertido,
+                    earnings: earnings,
+                    dueDate: dueDate.toLocaleDateString(),
+                    status: contractData.estado,
+                    img: logo,
+                    fecha_contrato: contractData.fecha_contrato.toDate().toLocaleDateString(),
+                    key: contractDocRef.id, // Only save contract ID
+                  });
+                } else {
+                  console.error("Inversor Data or Fecha is undefined for contract:", contractDocRef.id);
+                }
+              }
+            };
+
+            for (const contractId of Object.values(progreso)) {
+              await processContract(contractId);
+            }
+
+            for (const contractId of Object.values(finalizados)) {
+              await processContract(contractId);
+            }
+
+            setRows(rowsData);
+            setTotalInvested(totalInvestedAmount);
+
+            setPieData([
+              { id: "Finalizado", label: "Finalizado", value: statusCounts['Finalizado'], color: "hsl(124, 70%, 50%)" },
+              { id: "Activo", label: "Activo", value: statusCounts['Activo'], color: "hsl(90, 10%, 10%)" },
+              { id: "Fondeo", label: "Fondeo", value: statusCounts['Fondeo'], color: "hsl(100, 70%, 50%)" },
+              { id: "Cancelado", label: "Cancelado", value: statusCounts['Cancelado'], color: "hsl(0, 70%, 50%)" },
+            ]);
+
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching document: ", error);
+        }
+      };
+      fetchData();
+    }
   }, [userId]);
 
   return (
