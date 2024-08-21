@@ -14,6 +14,7 @@ const MyResponsivePieAdjusted = ({ data }) => {
     };
 
     useEffect(() => {
+        console.log(data);
         updateScreenSize();
         window.addEventListener('resize', updateScreenSize);
         return () => window.removeEventListener('resize', updateScreenSize);

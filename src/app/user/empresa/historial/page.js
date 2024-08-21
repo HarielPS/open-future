@@ -11,6 +11,7 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import Tooltip from '@mui/material/Tooltip';
+import MonthlyPaymentTable from "@/components/user/historial/proximoPagoEmpresa";
 
 const BasicDateCalendar = dynamic(() => import('@/components/user/historial/calendarmui'), { ssr: false });
 
@@ -123,6 +124,7 @@ export default function Page() {
 
                                     newEvents.push({
                                         date: fecha.toISOString().split('T')[0],
+                                        contractDate: fechaContrato.toISOString().split('T')[0],
                                         name: proyectoData.titulo || 'Proyecto sin nombre',
                                         empresa: empresaData.nombre || 'Empresa desconocida',
                                         amount: (contratoData.monto_pedido / duracion) + (contratoData.rendimiento || 0),
@@ -149,12 +151,12 @@ export default function Page() {
             }
         
             setevents(newEvents);
+            console.log(newEvents);
         }
     } catch (error) {
         console.error("Error obteniendo datos del empresa:", error);
     }
-  };
-
+};
 
 
   return (
@@ -171,12 +173,22 @@ export default function Page() {
       </Box>
       <Box sx={{ height: "100%", width: '100%', display: 'flex' }}>
         <Box sx={{ width: '70%', height: "100%", paddingRight: 4 }}>
+        <Box sx={{ width: '100%'}}>
+          <Box sx={{ textAlign: "center", marginBottom: '5vh' }}>
+            <Typography variant="h5" color="textprimary">
+              Monthly Payments
+            </Typography>
+          </Box>
+          <MonthlyPaymentTable events={events} />
+        </Box>
+        <Box sx={{marginTop:9, width: '100%'}}>
           <Box sx={{ textAlign: "center", marginBottom: '5vh' }}>
             <Typography variant="h5" color="textprimary">
               Payments Table
             </Typography>
           </Box>
           <InvestmentHistory />
+        </Box>
         </Box>
         <Box sx={{ width: '30%', height: "100%", display: 'flex', flexDirection: 'column'}}>
           <Box sx={{ textAlign: "center", marginBottom: '5vh' }}>

@@ -51,6 +51,7 @@ export default function Page() {
           let rowsData = [];
           let totalInvestedAmount = 0;
           let statusCounts = {
+            "Espera": 0,
             "Finalizado": 0,
             "Activo": 0,
             "Fondeo": 0,
@@ -106,10 +107,12 @@ export default function Page() {
             await processContract(contractDocRef);
           }
 
+          console.log(rowsData)
           setRows(rowsData);
           setTotalInvested(totalInvestedAmount);
 
           setPieData([
+            { id: "Espera", label: "Espera", value: statusCounts['Espera'], color: "hsl(268, 70%, 55%)" },
             { id: "Finalizado", label: "Finalizado", value: statusCounts['Finalizado'], color: "hsl(124, 70%, 50%)" },
             { id: "Activo", label: "Activo", value: statusCounts['Activo'], color: "hsl(90, 10%, 10%)" },
             { id: "Fondeo", label: "Fondeo", value: statusCounts['Fondeo'], color: "hsl(100, 70%, 50%)" },

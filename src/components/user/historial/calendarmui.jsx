@@ -101,7 +101,15 @@ const BasicDateCalendar = ({ events }) => {
               <Box key={index} sx={{ mb: 2 }}>
                 <Typography variant="h6">{event.name}</Typography>
                 <Typography variant="h6">{event.empresa}</Typography>
-                <Typography variant="body1">Amount: ${event.amount.toFixed(2)}</Typography>
+                <Typography variant="body1">
+                Amount: ${
+                  typeof event.amount === 'string'
+                    ? parseFloat(event.amount).toFixed(2)
+                    : typeof event.amount === 'number'
+                    ? event.amount.toFixed(2)
+                    : 'N/A'
+                }
+                </Typography>
               </Box>
             ))
           ) : (

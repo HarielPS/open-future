@@ -22,6 +22,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from '../../../../firebase';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 
 const columns = [
   { id: 'project', label: 'Proyecto', minWidth: 170, align: 'left' },
@@ -29,6 +30,7 @@ const columns = [
 ];
 
 const statusSeverity = {
+  'Espera': 'custom',
   'Finalizado': 'success',
   'Activo': 'info',
   'Fondeo': 'warning',
@@ -202,15 +204,36 @@ export default function InvestmentTable({ rows }) {
                             {value}
                           </Box>
                         ) : column.id === 'status' ? (
-                          <Alert
-                            severity={statusSeverity[value]}
-                            iconMapping={{
-                              info: <PaymentsIcon fontSize="inherit" />,
-                              warning: <CurrencyExchangeIcon fontSize="inherit" />,
-                            }}
-                          >
-                            {value}
-                          </Alert>
+                          value === 'Espera' ? (
+                            <Alert
+                              severity="custom" // O cualquier otro valor que desees usar
+                              sx={{ 
+                                backgroundColor: theme.palette.mode === 'dark' ? '#2b2c08' : '#fbfde5',
+                                color: theme.palette.mode === 'dark' ? '#fbfde5' : '#2b2c08',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                boxShadow: `0px 2px 4px rgba(0, 0, 0, 0.1)`,
+                                '& .MuiAlert-icon': {
+                                  color: theme.palette.mode === 'dark' ? '#fbfde5' : '#2b2c08',
+                                },
+                              }}
+                              iconMapping={{
+                                custom: <HourglassBottomIcon fontSize="inherit" />,
+                              }}
+                            >
+                              {value}
+                            </Alert>
+                          ) : (
+                            <Alert
+                              severity={statusSeverity[value]}
+                              iconMapping={{
+                                info: <PaymentsIcon fontSize="inherit" />,
+                                warning: <CurrencyExchangeIcon fontSize="inherit" />,
+                              }}
+                            >
+                              {value}
+                            </Alert>
+                          )
                         ) : (
                           column.format && typeof value === 'number' ? column.format(value) : value
                         )}
