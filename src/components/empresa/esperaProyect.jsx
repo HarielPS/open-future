@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from "../../../firebase";
-
+import { Hedera } from "../../../services/hedera/hederaService";
 export default function ProjectCards({ project, contract,contractId }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -36,6 +36,8 @@ export default function ProjectCards({ project, contract,contractId }) {
         // Add other fields to update if needed
       });
 
+      const res = await Hedera.DeploySmartContract();
+      Hedera.DepositarMensualidad(res.newContractId,localStorage.getItem('connectedWalletAddress'),contract.garantia)
       // Implement other payment logic here
       console.log("Payment confirmed and contract date updated");
 

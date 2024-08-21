@@ -38,6 +38,7 @@
     "react-calendar": "^5.0.0",
     "react-dom": "^18",
     "react-router-dom": "^6.25.1",
+    "solc": "^0.8.26",
     "web3": "^4.11.0"
   },
   "devDependencies": {

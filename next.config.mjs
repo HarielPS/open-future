@@ -11,6 +11,7 @@ const nextConfig = {
       INFURA: process.env.INFURA,
       COINMARKET: process.env.COINMARKET,
       APY_KEY_OPENAI : process.env.APY_KEY_OPENAI,
+      MY_ACCOUNT_ID: process.env.MY_ACCOUNT_ID,
       // MEASUREMENT_ID: process.env.MEASUREMENT_ID,
   },
   images: {
