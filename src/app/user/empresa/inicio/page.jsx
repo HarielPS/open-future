@@ -79,7 +79,7 @@ const ProjectsPage = () => {
       </Box>
 
       ) : (
-        <Alert severity="info">No projects in "Espera" state found.</Alert>
+        <Alert severity="info">No projects in &quot;Espera&quot; state found.</Alert>
       )}
     </Box>
   );

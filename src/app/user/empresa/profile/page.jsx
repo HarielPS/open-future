@@ -96,7 +96,8 @@ export default function AccountSettings() {
         otherCompanyType: profileData.companyType 
       });
     }
-  }, [editProfileData.companyType, profileData.companyType]);
+  }, [companyTypeOptions, editProfileData, profileData.companyType]);
+  
 
   const fetchSectorNames = async (sectorRefs) => {
     const sectorNames = await Promise.all(

@@ -126,7 +126,8 @@ export default function Page() {
 
   useEffect(() => {
     fetchProjects(currentPage);
-  }, [currentPage]);
+  }, [currentPage, fetchProjects]);
+  
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);

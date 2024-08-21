@@ -1,5 +1,6 @@
 import React from 'react';
 import Web3 from 'web3';
+import { Button } from '@mui/material';
 
 const PaymentProcessor = ({ amount, contrato, walletUser, walletEmpresa, onSuccess, onError }) => {
     const handlePayment = async () => {
