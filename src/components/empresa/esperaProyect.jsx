@@ -16,7 +16,7 @@ import {
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from "../../../firebase";
 
-export default function ProjectCards({ project, contract }) {
+export default function ProjectCards({ project, contract,contractId }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -29,9 +29,10 @@ export default function ProjectCards({ project, contract }) {
   const handleConfirmPayment = async () => {
     try {
       // Update the contract with the current date
-      const contractRef = doc(db, 'contrato', contract.id);
+      const contractRef = doc(db, 'contrato', contractId);
       await updateDoc(contractRef, {
         fecha_contrato: currentDate,
+        estado: 'Fondeo',
         // Add other fields to update if needed
       });
 
@@ -39,6 +40,7 @@ export default function ProjectCards({ project, contract }) {
       console.log("Payment confirmed and contract date updated");
 
       handleClose();
+      window.location.href = "/user/empresa/inicio";
     } catch (error) {
       console.error("Error updating contract date:", error);
     }

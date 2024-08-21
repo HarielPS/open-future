@@ -128,6 +128,7 @@ export default function Page() {
                                         name: proyectoData.titulo || 'Proyecto sin nombre',
                                         empresa: empresaData.nombre || 'Empresa desconocida',
                                         amount: (contratoData.monto_pedido / duracion) + (contratoData.rendimiento || 0),
+                                        contractRef: contratoRef.id, // Pass the contractRef ID here
                                     });
 
                                     fechaContrato = fecha;
@@ -157,6 +158,7 @@ export default function Page() {
         console.error("Error obteniendo datos del empresa:", error);
     }
 };
+
 
 
   return (

@@ -124,7 +124,7 @@ export default function SideBar({ visible, handleVisible }) {
                       </ul>
                     </li>
                   </ul>
-                  <ul className="list-none p-3 m-0">
+                  {/* <ul className="list-none p-3 m-0">
                     <li>
                       <StyleClass
                         nodeRef={btnRef4}
@@ -148,7 +148,7 @@ export default function SideBar({ visible, handleVisible }) {
                         <ItemSB icon={"pi-folder"} text={"Proyectos"} link={"proyectos"} />
                       </ul>
                     </li>
-                  </ul>
+                  </ul> */}
                 </div>
                 <div className="mt-auto">
                   <hr className="mx-3 border-top-1 border-none surface-border mb-0" />

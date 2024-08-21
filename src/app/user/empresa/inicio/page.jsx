@@ -34,7 +34,7 @@ const ProjectsPage = () => {
               if (projectData.exists()) {
                 esperaProjects.push({
                   id: contratoDocSnap.id,
-                  contract: contratoDocSnap.data(),
+                  contract: { ...contratoDocSnap.data(), id: contratoDocSnap.id }, // Incluyendo el id en el contrato
                   project: projectData.data(),
                 });
               }
@@ -73,7 +73,7 @@ const ProjectsPage = () => {
           </Tooltip>
         <Box>
           {projects.map((item) => (
-            <ProjectCards key={item.id} project={item.project} contract={item.contract} />
+            <ProjectCards key={item.id} project={item.project} contract={item.contract} contractId={item.id} />
           ))}
         </Box>
       </Box>

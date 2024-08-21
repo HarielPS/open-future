@@ -201,7 +201,7 @@ export default function LoanRequestForm() {
         impacto: formData.impacto,
         puntoEquilibrio: formData.puntoEquilibrio,
         empresa: doc(db, "empresa", userId),
-        estado_proyecto: "Fondeo",
+        estado_proyecto: "Espera",
         fecha_caducidad: expirationTimestamp,
         fecha_solicitud: Timestamp.now(),
         monto_pedido: formData.montoPedido,
@@ -223,7 +223,7 @@ export default function LoanRequestForm() {
       // Crear documento en la colección "contrato"
       const contratoRef = doc(collection(db, "contrato"));
       const contratoData = {
-        estado: "Fondeo",
+        estado: "Espera",
         duracion_contrato: formData.plazoPropuesto,
         // fecha_contrato: null, // Dejar en blanco
         fecha_pago: 30,
